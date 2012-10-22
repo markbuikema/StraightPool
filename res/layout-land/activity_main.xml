@@ -1,0 +1,82 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/button_add"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/default_margin"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:drawableLeft="@android:drawable/ic_menu_add"
+            android:drawablePadding="@dimen/default_margin"
+            android:gravity="left|center_vertical"
+            android:text="@string/add_to_list" />
+
+        <Button
+            android:id="@+id/button_rerack"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/default_margin"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:drawableLeft="@android:drawable/ic_menu_rotate"
+            android:drawablePadding="@dimen/default_margin"
+            android:gravity="left|center_vertical"
+            android:text="@string/rerack" />
+
+        <Button
+            android:id="@+id/button_foul"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/default_margin"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:drawableLeft="@android:drawable/ic_menu_close_clear_cancel"
+            android:drawablePadding="@dimen/default_margin"
+            android:gravity="left|center_vertical"
+            android:text="@string/foul" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <NumberPicker
+            android:id="@+id/picker_remaining_balls"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/default_margin" />
+
+        <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal" >
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" >
+
+                <LinearLayout
+                    android:id="@+id/linearlayout_caption_profiles"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" >
+                </LinearLayout>
+
+                <ListView
+                    android:id="@+id/listview_score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</LinearLayout>
