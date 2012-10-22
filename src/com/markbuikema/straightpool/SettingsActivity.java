@@ -2,6 +2,7 @@ package com.markbuikema.straightpool;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -61,6 +63,8 @@ public class SettingsActivity extends Activity {
 	private OAuthProvider provider;
 	private String userKey;
 	private String userSecret;
+
+	private int iconDims = 400;
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -199,6 +203,12 @@ public class SettingsActivity extends Activity {
 					R.layout.list_item_setting, null);
 			toggle = new Switch(SettingsActivity.this);
 			toggle.setFocusable(false);
+
+			LayoutParams toggleParams = new LayoutParams(
+					LayoutParams.WRAP_CONTENT, 64);
+
+			toggle.setLayoutParams(toggleParams);
+
 			SharedPreferences prefs = SettingsActivity.this
 					.getSharedPreferences("settings", 0);
 			toggle.setChecked(prefs.getBoolean(key, false));
@@ -241,21 +251,22 @@ public class SettingsActivity extends Activity {
 			TextView titleView = (TextView) view
 					.findViewById(R.id.textview_setting);
 			titleView.setText(title);
-			LayoutParams iconParams = new LayoutParams(0,
-					LayoutParams.MATCH_PARENT);
-			iconParams.width = iconParams.height;
+			LayoutParams iconParams = new LayoutParams(64, 64);
 
 			icon = new ImageView(SettingsActivity.this);
 			icon.setImageBitmap(BitmapFactory.decodeResource(getResources(),
 					R.drawable.ic_facebook));
-			icon.setFocusable(false);
 			icon.setLayoutParams(iconParams);
-			loginDetails = new TextView(SettingsActivity.this);
-			loginDetails.setText("Logged in");
-			saveState();
 
-			((ViewGroup) view).addView(icon);
+			loginDetails = new TextView(SettingsActivity.this);
+
+			loginDetails.setPadding(0, 0, (int) SettingsActivity.this
+					.getResources().getDimension(R.dimen.default_margin), 0);
+
 			((ViewGroup) view).addView(loginDetails);
+			((ViewGroup) view).addView(icon);
+
+			saveState();
 
 		}
 
@@ -264,6 +275,11 @@ public class SettingsActivity extends Activity {
 				facebookLogin();
 			} else {
 				new Logout().execute();
+				SharedPreferences prefs = SettingsActivity.this
+						.getSharedPreferences("settings", 0);
+				SharedPreferences.Editor editor = prefs.edit();
+				editor.putString("facebook_user", "unauthorized");
+				editor.apply();
 			}
 
 		}
@@ -289,7 +305,10 @@ public class SettingsActivity extends Activity {
 
 		}
 
-		private class UsernameRetriever extends AsyncTask<Void, Void, String> {
+		private class InitializeUserInfo extends AsyncTask<Void, Void, String> {
+
+			Bitmap bitmap;
+			String id;
 
 			@Override
 			protected String doInBackground(Void... params) {
@@ -297,6 +316,12 @@ public class SettingsActivity extends Activity {
 				String username = "";
 				try {
 					json = facebook.request("me");
+
+					URL url = new URL(
+							"https://graph.facebook.com/me/picture?type=square&method=GET&access_token="
+									+ facebook.getAccessToken());
+					bitmap = BitmapFactory.decodeStream(url.openConnection()
+							.getInputStream());
 				} catch (MalformedURLException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
@@ -308,6 +333,7 @@ public class SettingsActivity extends Activity {
 					JSONObject obj = new JSONObject(json);
 					username = obj.getString("name");
 
+					id = obj.getString("id");
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -316,13 +342,20 @@ public class SettingsActivity extends Activity {
 			}
 
 			public void onPostExecute(String s) {
-				loginDetails.setText("Logged in as " + s);
+				loginDetails.setText(s);
+				icon.setImageBitmap(bitmap);
+				
+				SharedPreferences prefs = SettingsActivity.this
+						.getSharedPreferences("settings", 0);
+				SharedPreferences.Editor editor = prefs.edit();
+				editor.putString("facebook_user", id);
+				editor.apply();
 			}
 		}
 
 		private void facebookLogin() {
 			if (!facebook.isSessionValid()) {
-				String[] permissions = new String[] { "user_about_me" };
+				String[] permissions = new String[] { "user_about_me", "" };
 				facebook.authorize(SettingsActivity.this, permissions,
 						new DialogListener() {
 
@@ -336,7 +369,6 @@ public class SettingsActivity extends Activity {
 								editor.putString("facebook",
 										facebook.getAccessToken());
 								editor.apply();
-								new UsernameRetriever().execute();
 								saveState();
 
 							}
@@ -360,21 +392,27 @@ public class SettingsActivity extends Activity {
 
 			if (facebook.isSessionValid()) {
 				editor.putString(key, facebook.getAccessToken());
-				icon.setVisibility(View.GONE);
-				loginDetails.setVisibility(View.VISIBLE);
+				Log.d("FB ACCESS TOKEN", facebook.getAccessToken());
 			} else {
 				editor.putString(key, "unauthorized");
-				icon.setVisibility(View.VISIBLE);
-				loginDetails.setVisibility(View.GONE);
 			}
 
 			editor.apply();
+			icon.setImageBitmap(BitmapFactory.decodeResource(
+					SettingsActivity.this.getResources(),
+					R.drawable.ic_facebook));
+			if (facebook.isSessionValid()) {
+				loginDetails.setText("Loading...");
+				new InitializeUserInfo().execute();
+			} else {
+				loginDetails.setText("");
+			}
 
 			Toast.makeText(
 					SettingsActivity.this,
 					"Facebook state saved: "
 							+ prefs.getString(key, "undefined"),
-					Toast.LENGTH_LONG).show();
+					Toast.LENGTH_SHORT).show();
 
 		}
 
@@ -391,22 +429,25 @@ public class SettingsActivity extends Activity {
 			TextView titleView = (TextView) view
 					.findViewById(R.id.textview_setting);
 			titleView.setText(title);
-			LayoutParams iconParams = new LayoutParams(0,
-					LayoutParams.MATCH_PARENT);
-			iconParams.width = iconParams.height;
 
 			icon = new ImageView(SettingsActivity.this);
 			icon.setImageBitmap(BitmapFactory.decodeResource(getResources(),
 					R.drawable.ic_twitter));
-			icon.setFocusable(false);
-			icon.setLayoutParams(iconParams);
 			loginDetails = new TextView(SettingsActivity.this);
-			loginDetails.setText("Logged in");
+			loginDetails.setPadding(0, 0, (int) SettingsActivity.this
+					.getResources().getDimension(R.dimen.default_margin), 0);
+
+			((ViewGroup) view).addView(loginDetails);
+			((ViewGroup) view).addView(icon);
+
+			LayoutParams iconParams = new LayoutParams(64, 64);
+
+			icon.setLayoutParams(iconParams);
+
+			Log.d("height/width pic", "" + view.getHeight());
+			this.key = key;
 			saveState();
 
-			((ViewGroup) view).addView(icon);
-			((ViewGroup) view).addView(loginDetails);
-			this.key = key;
 		}
 
 		public void performAction() {
@@ -425,20 +466,66 @@ public class SettingsActivity extends Activity {
 
 			if (am.isAuthorized()) {
 				editor.putString(key, am.getConsumer().getToken());
-				icon.setVisibility(View.GONE);
-				loginDetails.setVisibility(View.VISIBLE);
 			} else {
 				editor.putString(key, "unauthorized");
-				icon.setVisibility(View.VISIBLE);
-				loginDetails.setVisibility(View.GONE);
 			}
-
 			editor.apply();
+			icon.setImageBitmap(BitmapFactory.decodeResource(
+					SettingsActivity.this.getResources(), R.drawable.ic_twitter));
+
+			if (am.isAuthorized()) {
+				new InitializeUserInfo().execute();
+				loginDetails.setText("Loading...");
+			} else {
+				loginDetails.setText("");
+			}
 
 			Toast.makeText(
 					SettingsActivity.this,
 					"Twitter state saved: " + prefs.getString(key, "undefined"),
-					Toast.LENGTH_LONG).show();
+					Toast.LENGTH_SHORT).show();
+		}
+
+		private class InitializeUserInfo extends AsyncTask<Void, Void, Void> {
+
+			String name = "Logged in.";
+			Bitmap profilePic = BitmapFactory
+					.decodeResource(SettingsActivity.this.getResources(),
+							R.drawable.ic_twitter);
+			String userId = "unauthorized";
+
+			@Override
+			protected Void doInBackground(Void... params) {
+				String output = TwitterAuthActivity
+						.getContent("http://api.twitter.com/1/account/verify_credentials.json?skip_status=true&include_entities=false");
+				try {
+					JSONObject userObject = new JSONObject(output);
+					name = userObject.getString("name");
+					profilePic = TwitterAuthActivity.getBitmap(userObject
+							.getString("profile_image_url_https"));
+
+					userId = userObject.getString("id");
+
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return null;
+
+			}
+
+			public void onPostExecute(Void v) {
+				loginDetails.setText(name);
+				icon.setImageBitmap(profilePic);
+
+				SharedPreferences prefs = SettingsActivity.this
+						.getSharedPreferences("settings", 0);
+				SharedPreferences.Editor editor = prefs.edit();
+				editor.putString("twitter_user", userId);
+				editor.apply();
+
+			}
+
 		}
 
 		private class Authorize extends AsyncTask<Void, Void, String> {
@@ -452,8 +539,7 @@ public class SettingsActivity extends Activity {
 			protected String doInBackground(Void... arg0) {
 				try {
 					return am.getProvider().retrieveRequestToken(
-							am.getConsumer(),
-							AuthorizationManager.callbackUrl);
+							am.getConsumer(), AuthorizationManager.callbackUrl);
 				} catch (OAuthMessageSignerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -477,6 +563,7 @@ public class SettingsActivity extends Activity {
 				i.setClass(SettingsActivity.this, TwitterAuthActivity.class);
 				i.putExtra("uri", arg0);
 				startActivity(i);
+				finish();
 			}
 		}
 
