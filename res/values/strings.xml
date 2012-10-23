@@ -13,5 +13,9 @@
     <string name="foul">Foul</string>
     <string name="new_game">New game</string>
     <string name="settings">Settings</string>
+    <string name="foul1">-1</string>
+    <string name="foul2">-2</string>
+    <string name="foul15">-15</string>
+    <string name="foulcustom">...</string>
 
 </resources>

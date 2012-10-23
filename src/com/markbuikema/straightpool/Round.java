@@ -24,5 +24,9 @@ public class Round {
 		return remainingBalls;
 	}
 	
+	public void reduceScore(int index, int amount) {
+		score[index] -= amount;
+	}
+	
 	
 }

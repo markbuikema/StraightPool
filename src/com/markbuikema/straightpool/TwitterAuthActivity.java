@@ -30,19 +30,19 @@ public class TwitterAuthActivity extends Activity {
 
 	private WebView view;
 	private String url;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		url = getIntent().getExtras().getString("uri");
-		
+
 		view = new WebView(this);
 		setContentView(view);
 		view.loadUrl(url);
 		view.setWebViewClient(new WebViewClient() {
 			@Override
 			public boolean shouldOverrideUrlLoading(WebView view, String url) {
-				if (!url.startsWith("app://straightpool")) { 
+				if (!url.startsWith("app://straightpool")) {
 					view.loadUrl(url);
 				} else {
 					Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -53,7 +53,7 @@ public class TwitterAuthActivity extends Activity {
 			}
 		});
 	}
-	
+
 	public static Bitmap getBitmap(String url) {
 		Bitmap bmp = null;
 		try {
@@ -66,7 +66,7 @@ public class TwitterAuthActivity extends Activity {
 		}
 		return bmp;
 	}
-	
+
 	public static String getContent(String url) {
 		HttpClient client = new DefaultHttpClient();
 		HttpGet request = new HttpGet(url);

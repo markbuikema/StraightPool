@@ -4,12 +4,19 @@ import java.util.GregorianCalendar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,11 +31,15 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.NumberPicker;
 import android.widget.NumberPicker.OnValueChangeListener;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,16 +58,20 @@ public class MainActivity extends Activity {
 
 	private Button addButton;
 	private Button rerackButton;
+	private Button foulButton;
+
+	protected PowerManager.WakeLock wakeLock;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(
+				PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "My Tag");
 		Bundle extras = getIntent().getExtras();
 		if (extras != null && extras.getSerializable("game") != null) {
 			game = (Game) getIntent().getExtras().getSerializable("game");
 		} else {
-			Toast.makeText(this, "Error: could not create game.",
-					Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "Error: could not create game.", Toast.LENGTH_LONG).show();
 
 			GregorianCalendar mid = new GregorianCalendar();
 			mid.set(1994, 3, 10);
@@ -65,18 +80,37 @@ public class MainActivity extends Activity {
 			GregorianCalendar youngest = new GregorianCalendar();
 			youngest.set(1995, 3, 10);
 
-			game = new Game(new Profile[] {
-					new Profile("oudst", "Buikema", oldest, true, null),
-					new Profile("mid", "Buikema", mid, true, null),
+			game = new Game(new Profile[] { new Profile("oudst", "Buikema", oldest, true, null), new Profile("mid", "Buikema", mid, true, null),
 					new Profile("jongst", "Buikema", youngest, true, null) });
 		}
 		setContentView(R.layout.activity_main);
+
+		SharedPreferences prefs = getSharedPreferences("settings", 0);
+		setWakeLock(prefs.getBoolean("wakelock", false));
+
 		setScreenDimensions();
 		registerProfilesCaption();
 		registerPickerRemainingBalls();
 		registerScoreList();
 		registerAddButton();
 		registerRerackButton();
+		registerFoulButton();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		setWakeLock(false);
+	}
+
+	private void setWakeLock(boolean wakeLock) {
+		if (wakeLock) {
+			this.wakeLock.acquire();
+		} else {
+			if (this.wakeLock.isHeld()) {
+				this.wakeLock.release();
+			}
+		}
 	}
 
 	@SuppressLint("NewApi")
@@ -90,6 +124,134 @@ public class MainActivity extends Activity {
 	}
 
 	// TODO INITIALISATION (no todo, just bookmark)
+
+	private void registerFoulButton() {
+
+		foulButton = (Button) findViewById(R.id.button_foul);
+		foulButton.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+
+				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+				AlertDialog dialog;
+
+				final View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_foul, null);
+				final RadioGroup profileContainer = (RadioGroup) view.findViewById(R.id.radiogroup_foul_profiles);
+				final int blue = MainActivity.this.getResources().getColor(R.color.blue);
+				for (Profile profile : game.getPlayers()) {
+					RadioButton radio = new RadioButton(MainActivity.this);
+					radio.setText(profile.getFirstName());
+					profileContainer.addView(radio);
+				}
+				((RadioButton) profileContainer.getChildAt(0)).setChecked(true);
+				((RadioButton) profileContainer.getChildAt(0)).setTextColor(blue);
+
+				profileContainer.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+					public void onCheckedChanged(RadioGroup group, int checkedId) {
+						for (int i = 0; i < group.getChildCount(); i++) {
+							((RadioButton) group.getChildAt(i)).setTextColor(Color.BLACK);
+						}
+						((RadioButton) view.findViewById(checkedId)).setTextColor(blue);
+					}
+				});
+				final RadioGroup foulTypeSelector = (RadioGroup) view.findViewById(R.id.radiogroup_foultypes);
+				final EditText customFoulType = (EditText) view.findViewById(R.id.edittext_customfoul);
+				customFoulType.setText("-");
+				customFoulType.addTextChangedListener(new TextWatcher() {
+
+					public void afterTextChanged(Editable s) {
+					}
+
+					public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+					}
+
+					public void onTextChanged(CharSequence s, int start, int before, int count) {
+						if (!s.toString().startsWith("-")) {
+							customFoulType.setText("-" + String.valueOf(customFoulType.getText()).replace("-", ""));
+							customFoulType.setSelection(customFoulType.getText().length());
+						}
+						if (customFoulType.getSelectionStart() == 0) {
+							customFoulType.setSelection(1);
+						}
+					}
+
+				});
+				foulTypeSelector.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+					public void onCheckedChanged(RadioGroup group, int checkedId) {
+						if (checkedId == R.id.radiobutton_customfoul) {
+							customFoulType.setVisibility(View.VISIBLE);
+							customFoulType.requestFocus();
+							customFoulType.setSelection(customFoulType.getText().length());
+						} else {
+							customFoulType.setVisibility(View.INVISIBLE);
+						}
+
+						for (int i = 0; i < group.getChildCount(); i++) {
+							((RadioButton) group.getChildAt(i)).setTextColor(Color.BLACK);
+						}
+						((RadioButton) view.findViewById(checkedId)).setTextColor(blue);
+					}
+				});
+
+				dialog = builder.setTitle("Foul").setView(view).setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+					public void onClick(DialogInterface dialog, int which) {
+						int index = profileContainer.indexOfChild(profileContainer.findViewById(profileContainer.getCheckedRadioButtonId()));
+						Log.d("foul profile index", index + "");
+
+						int amount;
+						switch (foulTypeSelector.indexOfChild(foulTypeSelector.findViewById(foulTypeSelector.getCheckedRadioButtonId()))) {
+						case 0:
+							amount = 1;
+							break;
+						case 1:
+							amount = 2;
+							break;
+						case 2:
+							amount = 15;
+							break;
+						case 3:
+							try {
+							amount = Integer.valueOf(String.valueOf(customFoulType.getText()).replace("-", ""));
+							} catch (NumberFormatException e) {
+								amount = 0;
+							}
+							break;
+						default:
+							amount = 0;
+						}
+						if (scoreAdapter.getCount() > 0) {
+							scoreAdapter.getItem(scoreAdapter.getCount() - 1).reduceScore(index, amount);
+						} else {
+							int[] score = new int[game.getPlayerCount()];
+							for (int i = 0; i < game.getPlayerCount(); i++) {
+								score[i] = 0;
+								if (i == index) {
+									score[i] = -amount;
+								}
+							}
+							game.setRound(game.getRound()+1);
+							scoreAdapter.add(new Round(game.getRemainingBalls(),1,score));
+						}
+						game.getPlayers()[index].setScore(game.getPlayers()[index].getScore() - amount);
+						scoreAdapter.notifyDataSetChanged();
+						dialog.dismiss();
+					}
+				}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				}).create();
+				dialog.show();
+
+			}
+
+		});
+	}
+
 	private void registerRerackButton() {
 
 		rerackButton = (Button) findViewById(R.id.button_rerack);
@@ -116,8 +278,7 @@ public class MainActivity extends Activity {
 		});
 
 		if (game.getRerackAddition() > 0) {
-			rerackButton.setText("Re-rack ("
-					+ String.valueOf(game.getRerackAddition() / 14) + ")");
+			rerackButton.setText("Re-rack (" + String.valueOf(game.getRerackAddition() / 14) + ")");
 		} else {
 			rerackButton.setText("Re-rack");
 		}
@@ -128,20 +289,17 @@ public class MainActivity extends Activity {
 		pickerRemainingBalls.setMinValue(1);
 		pickerRemainingBalls.setMaxValue(game.getRemainingBalls());
 		pickerRemainingBalls.setWrapSelectorWheel(false);
-		pickerRemainingBalls
-				.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-		pickerRemainingBalls
-				.setOnValueChangedListener(new OnValueChangeListener() {
+		pickerRemainingBalls.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+		pickerRemainingBalls.setOnValueChangedListener(new OnValueChangeListener() {
 
-					public void onValueChange(NumberPicker picker, int oldVal,
-							int newVal) {
-						if (newVal == 1) {
-							addButton.setEnabled(false);
-						} else {
-							addButton.setEnabled(true);
-						}
-					}
-				});
+			public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+				if (newVal == 1) {
+					addButton.setEnabled(false);
+				} else {
+					addButton.setEnabled(true);
+				}
+			}
+		});
 		pickerRemainingBalls.setValue(game.getRemainingBalls() - 1);
 		pickerRemainingBalls.setValue(game.getRemainingBalls());
 
@@ -151,8 +309,7 @@ public class MainActivity extends Activity {
 		scoreList = (ListView) findViewById(R.id.listview_score);
 		scoreAdapter = new ScoreAdapter(this, 0);
 		scoreList.setAdapter(scoreAdapter);
-		LayoutParams params = new LayoutParams((game.getPlayerCount() + 1)
-				* LIST_COLUMN_WIDTH, LayoutParams.MATCH_PARENT);
+		LayoutParams params = new LayoutParams((game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH, LayoutParams.MATCH_PARENT);
 		scoreList.setLayoutParams(params);
 		scoreList.setDividerHeight(0);
 
@@ -161,14 +318,11 @@ public class MainActivity extends Activity {
 	private void registerProfilesCaption() {
 		profileContainer = (LinearLayout) findViewById(R.id.linearlayout_caption_profiles);
 
-		LayoutParams containerParams = new LayoutParams(
-				(game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH,
-				LayoutParams.WRAP_CONTENT);
+		LayoutParams containerParams = new LayoutParams((game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH, LayoutParams.WRAP_CONTENT);
 		containerParams.gravity = Gravity.CENTER_HORIZONTAL;
 		profileContainer.setLayoutParams(containerParams);
 
-		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
-				LayoutParams.MATCH_PARENT, 1.0f);
+		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, 1.0f);
 
 		TextView round = new TextView(this);
 		round.setText("Round");
@@ -178,28 +332,14 @@ public class MainActivity extends Activity {
 		profileContainer.addView(round, params);
 
 		for (Profile profile : game.getPlayers()) {
-			View view = LayoutInflater.from(this).inflate(
-					R.layout.caption_profile, null);
-			Button profileView = (Button) view
-					.findViewById(R.id.profile_button);
+			View view = LayoutInflater.from(this).inflate(R.layout.caption_profile, null);
+			Button profileView = (Button) view.findViewById(R.id.profile_button);
 			profileView.setText(profile.getFirstName());
 			if (profile.getPicture() != null) {
-				profileView
-						.setCompoundDrawablesWithIntrinsicBounds(
-								null,
-								new BitmapDrawable(getResources(), profile
-										.getPicture()), null, null);
+				profileView.setCompoundDrawablesWithIntrinsicBounds(null, new BitmapDrawable(getResources(), profile.getPicture()), null, null);
 			} else {
-				profileView
-						.setCompoundDrawablesWithIntrinsicBounds(
-								null,
-								new BitmapDrawable(
-										getResources(),
-										BitmapFactory
-												.decodeResource(
-														getResources(),
-														android.R.drawable.ic_menu_report_image)),
-								null, null);
+				profileView.setCompoundDrawablesWithIntrinsicBounds(null,
+						new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_report_image)), null, null);
 			}
 
 			profileContainer.addView(view, params);
@@ -254,18 +394,13 @@ public class MainActivity extends Activity {
 			game.setRound(0);
 		} else {
 
-			LinearLayout newLastRow = (LinearLayout) scoreAdapter.getView(
-					scoreAdapter.getCount() - 1, null, null);
+			LinearLayout newLastRow = (LinearLayout) scoreAdapter.getView(scoreAdapter.getCount() - 1, null, null);
 			int count = newLastRow.getChildCount() - 1;
 			for (int i = 0; i < count; i++) {
-				game.getPlayers()[i].setScore(Integer
-						.valueOf((String) ((TextView) newLastRow
-								.getChildAt(i + 1)).getText()));
+				game.getPlayers()[i].setScore(Integer.valueOf((String) ((TextView) newLastRow.getChildAt(i + 1)).getText()));
 			}
-			game.setRound(Integer.valueOf((String) ((TextView) newLastRow
-					.getChildAt(0)).getText()));
-			game.setRemainingBalls(scoreAdapter.getItem(
-					scoreAdapter.getCount() - 1).getRemainingBalls());
+			game.setRound(Integer.valueOf((String) ((TextView) newLastRow.getChildAt(0)).getText()));
+			game.setRemainingBalls(scoreAdapter.getItem(scoreAdapter.getCount() - 1).getRemainingBalls());
 
 			registerPickerRemainingBalls();
 			registerRerackButton();
@@ -279,15 +414,12 @@ public class MainActivity extends Activity {
 
 		int turnIndex = game.getAndIncreaseTurnIndex();
 
-		game.getPlayers()[turnIndex]
-				.appendToScore((game.getRemainingBalls() - pickerRemainingBalls
-						.getValue()) + game.getRerackAddition());
+		game.getPlayers()[turnIndex].appendToScore((game.getRemainingBalls() - pickerRemainingBalls.getValue()) + game.getRerackAddition());
 		int[] scores = new int[game.getPlayerCount()];
 		for (int i = 0; i < scores.length; i++) {
 			scores[i] = game.getPlayers()[i].getScore();
 		}
-		scoreAdapter.add(new Round(pickerRemainingBalls.getValue(), game
-				.getRound(), scores));
+		scoreAdapter.add(new Round(pickerRemainingBalls.getValue(), game.getRound(), scores));
 
 		game.setRemainingBalls(pickerRemainingBalls.getValue());
 		game.resetReracks();
@@ -301,8 +433,7 @@ public class MainActivity extends Activity {
 
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		SharedPreferences settings = getSharedPreferences("settings", 0);
-		menu.findItem(R.id.menu_save).setVisible(
-				!settings.getBoolean("autosave", false));
+		menu.findItem(R.id.menu_save).setVisible(!settings.getBoolean("autosave", false));
 		return true;
 	}
 
@@ -341,8 +472,7 @@ public class MainActivity extends Activity {
 		public View getView(int p, View view, ViewGroup group) {
 			view = new LinearLayout(MainActivity.this);
 
-			LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
-					LayoutParams.MATCH_PARENT, 1);
+			LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, 1);
 
 			Round round = getItem(p);
 
@@ -361,8 +491,7 @@ public class MainActivity extends Activity {
 			}
 
 			if (p == getCount() - 1 && getCount() > previousCount) {
-				Animation animation = AnimationUtils.loadAnimation(
-						MainActivity.this, R.anim.slide_top_to_bottom);
+				Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_top_to_bottom);
 				view.startAnimation(animation);
 				previousCount = getCount();
 			}
