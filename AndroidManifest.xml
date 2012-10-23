@@ -60,6 +60,11 @@
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_create_profile" >
         </activity>
+        <activity
+            android:name=".CreateGameActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_create_profile" >
+        </activity>
     </application>
 
 </manifest>

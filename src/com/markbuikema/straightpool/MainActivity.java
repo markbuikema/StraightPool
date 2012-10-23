@@ -1,5 +1,6 @@
 package com.markbuikema.straightpool;
 
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
 import android.annotation.SuppressLint;
@@ -41,7 +42,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -67,22 +67,10 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(
 				PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "My Tag");
+
 		Bundle extras = getIntent().getExtras();
-		if (extras != null && extras.getSerializable("game") != null) {
-			game = (Game) getIntent().getExtras().getSerializable("game");
-		} else {
-			Toast.makeText(this, "Error: could not create game.", Toast.LENGTH_LONG).show();
+		createProfiles(extras);
 
-			GregorianCalendar mid = new GregorianCalendar();
-			mid.set(1994, 3, 10);
-			GregorianCalendar oldest = new GregorianCalendar();
-			oldest.set(1993, 3, 10);
-			GregorianCalendar youngest = new GregorianCalendar();
-			youngest.set(1995, 3, 10);
-
-			game = new Game(new Profile[] { new Profile("oudst", "Buikema", oldest, null, "", ""), new Profile("mid", "Buikema", mid, null, "", ""),
-					new Profile("jongst", "Buikema", youngest, null, "", "") });
-		}
 		setContentView(R.layout.activity_main);
 
 		SharedPreferences prefs = getSharedPreferences("settings", 0);
@@ -95,6 +83,25 @@ public class MainActivity extends Activity {
 		registerAddButton();
 		registerRerackButton();
 		registerFoulButton();
+	}
+
+	private void createProfiles(Bundle extras) {
+		ArrayList<String> parsableProfiles = extras.getStringArrayList("game");
+		Profile[] profiles = new Profile[parsableProfiles.size() / 6];
+		ArrayList<ArrayList<String>> dividedProfiles = new ArrayList<ArrayList<String>>();
+		for (int i = 0; i < parsableProfiles.size() / 6; i++) {
+			dividedProfiles.add(new ArrayList<String>());
+		}
+		for (int i = 0; i < parsableProfiles.size(); i++) {
+			dividedProfiles.get(i / 6).add(parsableProfiles.get(i));
+		}
+		for (int i = 0; i < dividedProfiles.size(); i++) {
+			String date = dividedProfiles.get(i).get(2);
+			GregorianCalendar bday = new GregorianCalendar(Integer.valueOf(date.split("-")[2]),Integer.valueOf(date.split("-")[1]),Integer.valueOf(date.split("-")[0]));
+			profiles[i] = new Profile(dividedProfiles.get(i).get(0), dividedProfiles.get(i).get(1), bday, dividedProfiles.get(i).get(3), null, dividedProfiles.get(i).get(4), dividedProfiles.get(i).get(5));
+		}
+
+		game = new Game(profiles);		
 	}
 
 	@Override

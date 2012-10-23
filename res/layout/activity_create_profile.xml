@@ -45,28 +45,7 @@
                 android:editable="false"
                 android:hint="@string/hint_birthdate" />
 
-            <RadioGroup
-                android:id="@+id/radiogroup_gender"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal" >
-
-                <RadioButton
-                    android:id="@+id/male"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:checked="true"
-                    android:text="@string/male" />
-
-                <RadioButton
-                    android:id="@+id/female"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/female" />
-            </RadioGroup>
+           
 
             <Button
                 android:id="@+id/button_facebooklink"

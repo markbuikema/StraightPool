@@ -33,5 +33,7 @@
     <string name="twitter_notlinked">Not linked to Twitter</string>
     <string name="button_cancel">Cancel</string>
     <string name="button_create">Create</string>
+    <string name="menu_start">Start game</string>
+    <string name="title_activity_create_game">Select players</string>
 
 </resources>

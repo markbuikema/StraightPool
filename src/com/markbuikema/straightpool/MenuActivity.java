@@ -24,7 +24,7 @@ public class MenuActivity extends Activity {
 		newGameButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
-				Intent i = new Intent(MenuActivity.this, MainActivity.class);
+				Intent i = new Intent(MenuActivity.this, CreateGameActivity.class);
 				i.setAction(Intent.ACTION_VIEW);
 				startActivity(i);
 			}

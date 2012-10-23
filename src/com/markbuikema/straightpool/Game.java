@@ -1,9 +1,7 @@
 package com.markbuikema.straightpool;
 
-import java.io.Serializable;
 
-@SuppressWarnings("serial")
-public class Game implements Serializable {
+public class Game  {
 
 	private int playerCount;
 	private Profile[] players;
@@ -107,5 +105,7 @@ public class Game implements Serializable {
 	public void setRound(int round) {
 		this.round = round;
 	}
+
+	
 
 }

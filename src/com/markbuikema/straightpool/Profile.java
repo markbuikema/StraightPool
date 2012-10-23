@@ -12,16 +12,23 @@ public class Profile {
 	private String facebookId;
 	private String twitterId;
 	private Bitmap picture;
+	private String pictureUrl;
 	private int score;
 
-	public Profile(String firstName, String lastName, GregorianCalendar birthday, Bitmap picture, String facebookId, String twitterId) {
+	public Profile(String firstName, String lastName, GregorianCalendar birthday, String pictureUrl, Bitmap picture, String facebookId, String twitterId) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthday = birthday;
 		this.picture = picture;
 		this.facebookId = facebookId;
 		this.twitterId = twitterId;
+		this.pictureUrl = pictureUrl;
 	}
+
+	public String getPictureUrl() {
+		return pictureUrl;
+	}
+
 
 	public int getScore() {
 		return score;

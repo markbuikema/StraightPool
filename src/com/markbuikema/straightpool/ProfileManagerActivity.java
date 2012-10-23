@@ -87,7 +87,7 @@ public class ProfileManagerActivity extends Activity {
 				Bitmap picture = TwitterAuthActivity.getBitmap(profiles.getString(profiles.getColumnIndex(KEY_PICTURE_URL)));
 
 				publishProgress(new Profile(profiles.getString(profiles.getColumnIndex(KEY_FIRSTNAME)), profiles.getString(profiles
-						.getColumnIndex(KEY_LASTNAME)), birthday, picture, profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID)),
+						.getColumnIndex(KEY_LASTNAME)), birthday, profiles.getString(profiles.getColumnIndex(KEY_PICTURE_URL)), picture, profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID)),
 						profiles.getString(profiles.getColumnIndex(KEY_TWITTER_ID))));
 			}
 			profiles.close();
