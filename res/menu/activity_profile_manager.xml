@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_add_profile"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="@string/menu_newprofile"
+        android:showAsAction="ifRoom"
+        android:orderInCategory="1">
+    </item>
+
+</menu>

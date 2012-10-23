@@ -80,8 +80,8 @@ public class MainActivity extends Activity {
 			GregorianCalendar youngest = new GregorianCalendar();
 			youngest.set(1995, 3, 10);
 
-			game = new Game(new Profile[] { new Profile("oudst", "Buikema", oldest, true, null), new Profile("mid", "Buikema", mid, true, null),
-					new Profile("jongst", "Buikema", youngest, true, null) });
+			game = new Game(new Profile[] { new Profile("oudst", "Buikema", oldest, null, "", ""), new Profile("mid", "Buikema", mid, null, "", ""),
+					new Profile("jongst", "Buikema", youngest, null, "", "") });
 		}
 		setContentView(R.layout.activity_main);
 
@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
 							break;
 						case 3:
 							try {
-							amount = Integer.valueOf(String.valueOf(customFoulType.getText()).replace("-", ""));
+								amount = Integer.valueOf(String.valueOf(customFoulType.getText()).replace("-", ""));
 							} catch (NumberFormatException e) {
 								amount = 0;
 							}
@@ -232,15 +232,15 @@ public class MainActivity extends Activity {
 									score[i] = -amount;
 								}
 							}
-							game.setRound(game.getRound()+1);
-							scoreAdapter.add(new Round(game.getRemainingBalls(),1,score));
+							game.setRound(game.getRound() + 1);
+							scoreAdapter.add(new Round(game.getRemainingBalls(), 1, score));
 						}
 						game.getPlayers()[index].setScore(game.getPlayers()[index].getScore() - amount);
 						scoreAdapter.notifyDataSetChanged();
 						dialog.dismiss();
 					}
 				}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					
+
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}

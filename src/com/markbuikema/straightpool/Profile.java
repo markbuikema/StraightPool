@@ -9,19 +9,18 @@ public class Profile {
 	private String firstName;
 	private String lastName;
 	private GregorianCalendar birthday;
-	private boolean isMale;
 	private String facebookId;
 	private String twitterId;
 	private Bitmap picture;
 	private int score;
-	
-	public Profile(String firstName, String lastName,
-			GregorianCalendar birthday, boolean isMale, Bitmap picture) {
+
+	public Profile(String firstName, String lastName, GregorianCalendar birthday, Bitmap picture, String facebookId, String twitterId) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthday = birthday;
-		this.isMale = isMale;
 		this.picture = picture;
+		this.facebookId = facebookId;
+		this.twitterId = twitterId;
 	}
 
 	public int getScore() {
@@ -31,7 +30,7 @@ public class Profile {
 	public void setScore(int score) {
 		this.score = score;
 	}
-	
+
 	public void appendToScore(int score) {
 		this.score += score;
 	}
@@ -48,10 +47,6 @@ public class Profile {
 		return birthday;
 	}
 
-	public boolean isMale() {
-		return isMale;
-	}
-
 	public String getFacebookId() {
 		return facebookId;
 	}
@@ -63,6 +58,5 @@ public class Profile {
 	public Bitmap getPicture() {
 		return picture;
 	}
-	
-	
+
 }

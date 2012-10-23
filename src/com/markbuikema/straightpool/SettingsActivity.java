@@ -63,8 +63,6 @@ public class SettingsActivity extends Activity {
 	private String userKey;
 	private String userSecret;
 
-	private int iconDims = 400;
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		FacebookInstance.get().authorizeCallback(requestCode, resultCode, data);
@@ -97,7 +95,7 @@ public class SettingsActivity extends Activity {
 				if (uri.toString().contains("denied")) {
 					AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
 					AlertDialog dialog;
-					builder.setMessage("Je moet de app authoriseren om gebruik te kunnen maken van de Twitter functies.")
+					builder.setMessage("If you don't authorize this app on Twitter, you won't be able to use its Twitter functionality.")
 							.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 
 								public void onClick(DialogInterface dialog, int which) {
@@ -108,8 +106,9 @@ public class SettingsActivity extends Activity {
 					dialog.show();
 				} else {
 
+					Log.d("URI", uri.toString());
 					String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-					GetFromAuthorization async = new GetFromAuthorization();
+					GenerateAccessToken async = new GenerateAccessToken();
 					async.execute(verifier);
 
 				}
@@ -143,11 +142,11 @@ public class SettingsActivity extends Activity {
 		});
 	}
 
-	public class GetFromAuthorization extends AsyncTask<String, Void, Void> {
+	public class GenerateAccessToken extends AsyncTask<String, Void, Void> {
 
 		/**
 		 * checkt of hij van de authorization activity komt bij het maken van deze
-		 * activity
+		 * activity en maakt access token.
 		 * 
 		 */
 		@Override
@@ -171,7 +170,11 @@ public class SettingsActivity extends Activity {
 		@Override
 		protected void onPostExecute(Void v) {
 
-			settings.get(2).saveState();
+			for (SettingType s: settings) {
+				if (s instanceof TwitterSetting) {
+					s.saveState();
+				}
+			}
 
 		}
 	}
@@ -453,7 +456,6 @@ public class SettingsActivity extends Activity {
 			} else {
 				loginDetails.setText("");
 			}
-
 			Toast.makeText(SettingsActivity.this, "Twitter state saved: " + prefs.getString(key, "undefined"), Toast.LENGTH_SHORT).show();
 		}
 

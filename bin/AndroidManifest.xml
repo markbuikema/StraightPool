@@ -9,6 +9,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -16,10 +17,12 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_activity_main" >
         </activity>
         <activity
             android:name=".SettingsActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_activity_settings" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -34,6 +37,7 @@
         </activity>
         <activity
             android:name=".MenuActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_activity_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,7 +47,18 @@
         </activity>
         <activity
             android:name=".TwitterAuthActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/title_auth_twitter" >
+        </activity>
+        <activity
+            android:name=".ProfileManagerActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_profiles" >
+        </activity>
+        <activity
+            android:name=".CreateProfileActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_create_profile" >
         </activity>
     </application>
 
