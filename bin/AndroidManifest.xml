@@ -63,7 +63,7 @@
         <activity
             android:name=".CreateGameActivity"
             android:configChanges="orientation|keyboardHidden"
-            android:label="@string/title_create_profile" >
+            android:label="@string/title_activity_create_game" >
         </activity>
     </application>
 

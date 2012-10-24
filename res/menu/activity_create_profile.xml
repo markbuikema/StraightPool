@@ -5,7 +5,7 @@
         android:id="@+id/menu_import_facebook"
         android:icon="@drawable/ic_facebook"
         android:orderInCategory="1"
-        android:showAsAction="ifRoom"
+        android:showAsAction="always"
         android:title="@string/import_facebook">
     </item>
     <item
@@ -19,7 +19,7 @@
         android:id="@+id/menu_import_twitter"
         android:icon="@drawable/ic_twitter"
         android:orderInCategory="2"
-        android:showAsAction="ifRoom"
+        android:showAsAction="always"
         android:title="@string/import_twitter">
     </item>
 

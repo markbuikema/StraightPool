@@ -20,7 +20,7 @@
     <string name="profile_manager">Profiles</string>
     <string name="title_profiles">Profiles</string>
     <string name="menu_newprofile">Create new profile</string>
-    <string name="title_create_profile">Import new profile</string>
+    <string name="title_create_profile">Create</string>
     <string name="hint_firstname">First name</string>
     <string name="hint_lastname">Last name</string>
     <string name="hint_birthdate">Date of birth</string>
