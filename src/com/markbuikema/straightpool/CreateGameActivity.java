@@ -106,7 +106,7 @@ public class CreateGameActivity extends Activity {
 
 		public ListItem(String firstName, String lastName, GregorianCalendar birthday, String pictureUrl, Bitmap picture, String facebookId,
 				String twitterId) {
-			super(firstName, lastName, birthday, pictureUrl, picture, facebookId, twitterId);
+			super("",firstName, lastName, birthday, pictureUrl, picture, facebookId, twitterId);
 			selected = false;
 		}
 

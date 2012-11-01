@@ -97,11 +97,13 @@ public class MainActivity extends Activity {
 		}
 		for (int i = 0; i < dividedProfiles.size(); i++) {
 			String date = dividedProfiles.get(i).get(2);
-			GregorianCalendar bday = new GregorianCalendar(Integer.valueOf(date.split("-")[2]),Integer.valueOf(date.split("-")[1]),Integer.valueOf(date.split("-")[0]));
-			profiles[i] = new Profile(dividedProfiles.get(i).get(0), dividedProfiles.get(i).get(1), bday, dividedProfiles.get(i).get(3), null, dividedProfiles.get(i).get(4), dividedProfiles.get(i).get(5));
+			GregorianCalendar bday = new GregorianCalendar(Integer.valueOf(date.split("-")[2]), Integer.valueOf(date.split("-")[1]), Integer.valueOf(date
+					.split("-")[0]));
+			profiles[i] = new Profile(i + "", dividedProfiles.get(i).get(0), dividedProfiles.get(i).get(1), bday, dividedProfiles.get(i).get(3), null,
+					dividedProfiles.get(i).get(4), dividedProfiles.get(i).get(5));
 		}
 
-		game = new Game(profiles);		
+		game = new Game(profiles);
 	}
 
 	@Override

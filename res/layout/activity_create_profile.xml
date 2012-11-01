@@ -16,61 +16,140 @@
             android:orientation="vertical"
             android:padding="@dimen/default_margin" >
 
-            <Button
-                android:id="@+id/button_profilepic"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:drawableTop="@android:drawable/ic_menu_report_image" />
+                android:layout_height="wrap_content" >
 
-            <EditText
-                android:id="@+id/edittext_firstname"
+                <ImageView
+                    android:id="@+id/imageview_profilepic"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="@dimen/default_margin"
+                    android:src="@android:drawable/ic_menu_report_image" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/edittext_firstname"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hint_firstname"
+                        android:inputType="textPersonName" >
+
+                        <requestFocus />
+                    </EditText>
+
+                    <EditText
+                        android:id="@+id/edittext_lastname"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hint_lastname"
+                        android:inputType="textPersonName" />
+
+                    <EditText
+                        android:id="@+id/edittext_birthdate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:editable="false"
+                        android:hint="@string/hint_birthdate" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_firstname"
-                android:inputType="textPersonName" >
-            </EditText>
+                android:layout_height="48dp"
+                android:layout_marginTop="@dimen/default_margin" >
 
-            <EditText
-                android:id="@+id/edittext_lastname"
+                <ImageView
+                    android:id="@+id/imageview_facebook"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_facebook" />
+
+                <ProgressBar
+                    android:id="@+id/progressbar_facebook"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="@dimen/default_margin"
+                    android:visibility="gone" />
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp" >
+
+                    <Button
+                        android:id="@+id/button_facebooklink"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginLeft="@dimen/default_margin"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:text="@string/facebook_notlinked" />
+
+                    <Button
+                        android:id="@+id/button_removefacebook"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="right"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:drawableStart="@android:drawable/ic_menu_close_clear_cancel"
+                        android:gravity="center_vertical"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_lastname"
-                android:inputType="textPersonName" />
+                android:layout_height="48dp"
+                android:layout_marginTop="@dimen/default_margin" >
 
-            <EditText
-                android:id="@+id/edittext_birthdate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:hint="@string/hint_birthdate" />
+                <ImageView
+                    android:id="@+id/imageview_twitter"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_twitter" />
 
-           
+                <ProgressBar
+                    android:id="@+id/progressbar_twitter"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="@dimen/default_margin"
+                    android:visibility="gone" />
 
-            <Button
-                android:id="@+id/button_facebooklink"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_margin"
-                android:background="?android:attr/selectableItemBackground"
-                android:drawableLeft="@drawable/ic_facebook"
-                android:text="@string/facebook_notlinked" />
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp" >
 
-            <Button
-                android:id="@+id/button_twitterlink"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/default_margin"
-                android:background="?android:attr/selectableItemBackground"
-                android:drawableLeft="@drawable/ic_twitter"
-                android:text="@string/twitter_notlinked" />
+                    <Button
+                        android:id="@+id/button_twitterlink"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginLeft="@dimen/default_margin"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:text="@string/twitter_notlinked" />
+
+                    <Button
+                        android:id="@+id/button_removetwitter"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="right"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:drawableStart="@android:drawable/ic_menu_close_clear_cancel"
+                        android:gravity="center_vertical"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        
         android:layout_marginLeft="@dimen/default_margin"
         android:layout_marginRight="@dimen/default_margin"
         android:background="@android:color/darker_gray" />
@@ -86,12 +165,13 @@
             android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:text="@string/button_cancel" />
- <View
-        android:layout_height="match_parent"
-        android:layout_width="1dp"
-        android:layout_marginTop="@dimen/default_margin"
-        android:layout_marginBottom="@dimen/default_margin"
-        android:background="@android:color/darker_gray" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:layout_marginTop="@dimen/default_margin"
+            android:background="@android:color/darker_gray" />
 
         <Button
             android:id="@+id/button_create"
@@ -100,7 +180,6 @@
             android:layout_weight="1"
             android:background="?android:attr/selectableItemBackground"
             android:text="@string/button_create" />
-
     </LinearLayout>
 
 </LinearLayout>

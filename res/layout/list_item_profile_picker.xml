@@ -6,16 +6,17 @@
 
     <ImageView
         android:id="@+id/imageview_profile_pic"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_vertical"
+        
         android:layout_marginLeft="@dimen/default_margin"
-        android:layout_marginRight="@dimen/default_margin"
-        android:layout_marginTop="@dimen/default_margin" />
+        android:layout_marginRight="@dimen/default_margin"/>
 
     <TextView
         android:id="@+id/textview_profile_name"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" 
+        android:layout_height="48dp" 
         android:gravity="center_vertical|left"/>
 
 </LinearLayout>

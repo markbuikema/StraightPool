@@ -21,7 +21,6 @@ public class ProfileDatabase {
 
 	public static final String KEY_ROWID = "_id";
 
-
 	public static final String KEY_BIRTHDATE = "birthdate";
 
 	public static final String KEY_PICTURE_URL = "pic_url";
@@ -140,6 +139,24 @@ public class ProfileDatabase {
 
 		return mDb.query(DATABASE_TABLE, new String[] { KEY_ROWID, KEY_FIRSTNAME, KEY_LASTNAME, KEY_BIRTHDATE, KEY_PICTURE_URL,
 				KEY_FACEBOOK_ID, KEY_TWITTER_ID }, null, null, null, null, (KEY_ROWID + " ASC"));
+	}
+	
+	public void replace(String profileId, String firstname, String lastname, GregorianCalendar birthdate, String pictureUrl, String fbid,
+			String twitterid) {
+		
+		String birthdateString = birthdate.get(GregorianCalendar.DAY_OF_MONTH) + "-" + birthdate.get(GregorianCalendar.MONTH) + "-"
+				+ birthdate.get(GregorianCalendar.YEAR) + "";
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_ROWID, profileId);
+		initialValues.put(KEY_FIRSTNAME, firstname);
+		initialValues.put(KEY_LASTNAME, lastname);
+		initialValues.put(KEY_BIRTHDATE, birthdateString);
+		initialValues.put(KEY_PICTURE_URL, pictureUrl);
+		initialValues.put(KEY_FACEBOOK_ID, fbid);
+		initialValues.put(KEY_TWITTER_ID, twitterid);
+		
+		mDb.replace(DATABASE_TABLE, null, initialValues);
+
 	}
 	
 	public int getCount() {

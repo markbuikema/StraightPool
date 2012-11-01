@@ -14,8 +14,11 @@ public class Profile {
 	private Bitmap picture;
 	private String pictureUrl;
 	private int score;
+	private String id;
 
-	public Profile(String firstName, String lastName, GregorianCalendar birthday, String pictureUrl, Bitmap picture, String facebookId, String twitterId) {
+	public Profile(String id, String firstName, String lastName, GregorianCalendar birthday, String pictureUrl, Bitmap picture, String facebookId,
+			String twitterId) {
+		this.id = id;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthday = birthday;
@@ -28,7 +31,6 @@ public class Profile {
 	public String getPictureUrl() {
 		return pictureUrl;
 	}
-
 
 	public int getScore() {
 		return score;
@@ -65,5 +67,11 @@ public class Profile {
 	public Bitmap getPicture() {
 		return picture;
 	}
+
+	public String getId() {
+		return id;
+	}
+	
+	
 
 }

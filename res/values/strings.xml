@@ -26,9 +26,7 @@
     <string name="hint_birthdate">Date of birth</string>
     <string name="male">Male</string>
     <string name="female">Female</string>
-    <string name="import_facebook">Import from Facebook</string>
-    <string name="import_twitter">Import from Twitter</string>
-    <string name="import_contacts">Import from contacts</string>
+    <string name="import_contacts">Import</string>
     <string name="facebook_notlinked">Not linked to Facebook</string>
     <string name="twitter_notlinked">Not linked to Twitter</string>
     <string name="button_cancel">Cancel</string>

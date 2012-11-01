@@ -35,6 +35,7 @@ public class MenuActivity extends Activity {
 			public void onClick(View v) {
 				Intent i = new Intent(MenuActivity.this, SettingsActivity.class);
 				i.setAction(Intent.ACTION_VIEW);
+				i.putExtra("from_profilemanager", false);
 				startActivity(i);
 			}
 		});

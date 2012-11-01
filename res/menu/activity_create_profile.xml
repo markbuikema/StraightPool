@@ -2,25 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
-        android:id="@+id/menu_import_facebook"
-        android:icon="@drawable/ic_facebook"
+        android:id="@+id/menu_import"
+        android:icon="@android:drawable/ic_menu_set_as"
         android:orderInCategory="1"
         android:showAsAction="always"
-        android:title="@string/import_facebook">
-    </item>
-    <item
-        android:id="@+id/menu_import_contacts"
-        android:icon="@android:drawable/ic_menu_report_image"
-        android:orderInCategory="0"
-        android:showAsAction="ifRoom"
         android:title="@string/import_contacts">
     </item>
-    <item
-        android:id="@+id/menu_import_twitter"
-        android:icon="@drawable/ic_twitter"
-        android:orderInCategory="2"
-        android:showAsAction="always"
-        android:title="@string/import_twitter">
-    </item>
+
 
 </menu>

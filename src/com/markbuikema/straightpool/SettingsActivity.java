@@ -44,7 +44,6 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.android.AsyncFacebookRunner;
 import com.facebook.android.DialogError;
 import com.facebook.android.Facebook;
 import com.facebook.android.Facebook.DialogListener;
@@ -65,7 +64,7 @@ public class SettingsActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		FacebookInstance.get().authorizeCallback(requestCode, resultCode, data);
+		FacebookInstance.get(this).authorizeCallback(requestCode, resultCode, data);
 	}
 
 	@SuppressLint("NewApi")
@@ -73,7 +72,7 @@ public class SettingsActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		setContentView(R.layout.activity_settings);
 		super.onCreate(savedInstanceState);
-		facebook = FacebookInstance.get();
+		facebook = FacebookInstance.get(this);
 		am = AuthorizationManager.getInstance();
 		am.setContext(this);
 
@@ -140,6 +139,19 @@ public class SettingsActivity extends Activity {
 				adapter.getItem(arg2).performAction();
 			}
 		});
+
+		if (getIntent().getBooleanExtra("from_profilemanager", false)) {
+			getFacebookSetting().facebookLogin();
+		}
+	}
+	
+	private FacebookSetting getFacebookSetting() {
+		for (SettingType setting: settings) {
+			if (setting instanceof FacebookSetting) {
+				return (FacebookSetting)setting;
+			}
+		}
+		return null;
 	}
 
 	public class GenerateAccessToken extends AsyncTask<String, Void, Void> {
@@ -170,7 +182,7 @@ public class SettingsActivity extends Activity {
 		@Override
 		protected void onPostExecute(Void v) {
 
-			for (SettingType s: settings) {
+			for (SettingType s : settings) {
 				if (s instanceof TwitterSetting) {
 					s.saveState();
 				}
@@ -346,7 +358,7 @@ public class SettingsActivity extends Activity {
 
 		private void facebookLogin() {
 			if (!facebook.isSessionValid()) {
-				String[] permissions = new String[] { "user_about_me", "" };
+				String[] permissions = new String[] { "user_about_me", "user_birthday", "friends_birthday" };
 				facebook.authorize(SettingsActivity.this, permissions, new DialogListener() {
 
 					public void onComplete(Bundle values) {
@@ -356,6 +368,13 @@ public class SettingsActivity extends Activity {
 						editor.putString("facebook", facebook.getAccessToken());
 						editor.apply();
 						saveState();
+						
+						if (getIntent().getBooleanExtra("from_profilemanager", false)) {
+							Intent i = new Intent(Intent.ACTION_VIEW);
+							i.setClass(SettingsActivity.this, ProfileManagerActivity.class);
+							startActivity(i);
+							finish();
+						}
 
 					}
 
