@@ -59,6 +59,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
 
 public class CreateProfileActivity extends Activity {
 
@@ -87,8 +88,6 @@ public class CreateProfileActivity extends Activity {
 	private Handler mHandler = new Handler();
 	private Button facebookLink;
 	private Button twitterLink;
-	
-	
 
 	private AuthorizationManager am = AuthorizationManager.getInstance();
 	private ImageView facebookIcon;
@@ -107,8 +106,6 @@ public class CreateProfileActivity extends Activity {
 		setContentView(R.layout.activity_create_profile);
 
 		profileId = getIntent().getStringExtra("profileId");
-		
-		
 
 		pictureUrl = getIntent().getStringExtra("url");
 		twitterId = getIntent().getStringExtra("twitterId");
@@ -307,7 +304,7 @@ public class CreateProfileActivity extends Activity {
 		});
 
 	}
-	
+
 	private boolean infoIsValid() {
 		boolean valid = true;
 		if (firstNameView.getText().length() < 1) {
@@ -392,7 +389,9 @@ public class CreateProfileActivity extends Activity {
 					switch (p) {
 					case 0:
 						icon.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_facebook));
-						break;
+						if (facebook.isSessionValid()) {
+							break;
+						}
 					case 1:
 						icon.setImageDrawable(getIconFromPackageName("com.android.contacts"));
 					}
@@ -401,7 +400,9 @@ public class CreateProfileActivity extends Activity {
 				}
 			};
 			list.setAdapter(importAdapter);
-			importAdapter.add("Import from Facebook");
+			if (facebook.isSessionValid()) {
+				importAdapter.add("Import from Facebook");
+			}
 			importAdapter.add("Import from contacts");
 			dialog = builder.setTitle("Import profile").setView(list).setCancelable(true).create();
 			dialog.show();
@@ -472,6 +473,10 @@ public class CreateProfileActivity extends Activity {
 
 		AlertDialog loader;
 
+		public FacebookFriendsPicker() {
+
+		}
+
 		@Override
 		protected Void doInBackground(Boolean... arg0) {
 
@@ -480,7 +485,9 @@ public class CreateProfileActivity extends Activity {
 			Bundle params = new Bundle();
 			params.putString("fields", "birthday,first_name,last_name,name");
 			String response;
+			String meResponse;
 			try {
+				meResponse = facebook.request("me", params);
 				response = facebook.request("me/friends", params);
 
 				final ArrayAdapter<FacebookFriendsListItem> friends = new ArrayAdapter<FacebookFriendsListItem>(CreateProfileActivity.this, 0) {
@@ -502,6 +509,33 @@ public class CreateProfileActivity extends Activity {
 				};
 
 				try {
+
+					JSONObject me = new JSONObject(meResponse);
+
+					String meFirst = me.getString("first_name");
+					String meLast = me.getString("last_name");
+					String meName = me.getString("name");
+					String meId = me.getString("id");
+					String meBdayString;
+					try {
+						meBdayString = me.getString("birthday");
+					} catch (JSONException jsone) {
+						meBdayString = null;
+					}
+
+					GregorianCalendar meBirthday = null;
+					if (meBdayString != null) {
+						String[] dateArray = meBdayString.split("/");
+						if (dateArray.length == 3) {
+							meBirthday = new GregorianCalendar();
+							meBirthday.set(Integer.parseInt(dateArray[2]), Integer.parseInt(dateArray[0]) - 1, Integer.parseInt(dateArray[1]));
+						} else {
+							meBirthday = null;
+						}
+					}
+
+					friends.add(new FacebookFriendsListItem(meName, meFirst, meLast, meId, meBirthday));
+
 					JSONObject object = new JSONObject(response);
 
 					JSONArray array = object.getJSONArray("data");
@@ -583,6 +617,12 @@ public class CreateProfileActivity extends Activity {
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+			} catch (FacebookError e) {
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setClass(CreateProfileActivity.this, SettingsActivity.class);
+				i.putExtra("from_profilemanager", true);
+				startActivity(i);
+				finish();
 			}
 			return null;
 		}
