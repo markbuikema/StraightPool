@@ -64,7 +64,7 @@ public class SettingsActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		FacebookInstance.get(this).authorizeCallback(requestCode, resultCode, data);
+		FacebookInstance.get().authorizeCallback(requestCode, resultCode, data);
 	}
 
 	@SuppressLint("NewApi")
@@ -72,7 +72,7 @@ public class SettingsActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		setContentView(R.layout.activity_settings);
 		super.onCreate(savedInstanceState);
-		facebook = FacebookInstance.get(this);
+		facebook = FacebookInstance.get();
 		am = AuthorizationManager.getInstance();
 		am.setContext(this);
 

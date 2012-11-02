@@ -10,6 +10,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -46,6 +48,18 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
+	public static final String KEY_FIRSTNAME = "firstname";
+
+	public static final String KEY_LASTNAME = "lastname";
+
+	public static final String KEY_ROWID = "_id";
+
+	public static final String KEY_BIRTHDATE = "birthdate";
+
+	public static final String KEY_FACEBOOK_ID = "fbid";
+
+	public static final String KEY_TWITTER_ID = "twitterid";
+
 	private static final int LIST_COLUMN_WIDTH = 150;
 
 	private NumberPicker pickerRemainingBalls;
@@ -70,7 +84,40 @@ public class MainActivity extends Activity {
 				PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "My Tag");
 
 		Bundle extras = getIntent().getExtras();
-		createProfiles(extras);
+
+		ArrayList<String> ids = (ArrayList<String>) extras.getSerializable("profile_ids");
+		ArrayList<Profile> profiles = new ArrayList<Profile>();
+		ProfileDatabase mDb = ProfileDatabase.getInstance(this);
+		mDb.open();
+
+		Cursor c = mDb.fetchAllEntries();
+
+		while (c.moveToNext()) {
+
+			String first = c.getString(c.getColumnIndex(KEY_FIRSTNAME));
+			String last = c.getString(c.getColumnIndex(KEY_LASTNAME));
+			String id = c.getString(c.getColumnIndex(KEY_ROWID));
+			String facebookId = c.getString(c.getColumnIndex(KEY_FACEBOOK_ID));
+			String twitterId = c.getString(c.getColumnIndex(KEY_TWITTER_ID));
+			String dateString = c.getString(c.getColumnIndex(KEY_BIRTHDATE));
+			GregorianCalendar birthday = new GregorianCalendar();
+			int day = Integer.valueOf(dateString.split("-")[0]);
+			int month = Integer.valueOf(dateString.split("-")[1]);
+			int year = Integer.valueOf(dateString.split("-")[2]);
+			birthday.set(year, month, day);
+			if (ids.contains(id)) {
+				profiles.add(new Profile(id, first, last, birthday, facebookId, twitterId));
+			}
+		}
+		c.close();
+		mDb.close();
+
+		Profile[] array = new Profile[profiles.size()];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = profiles.get(i);
+		}
+
+		game = new Game(array);
 
 		setContentView(R.layout.activity_main);
 
@@ -84,27 +131,6 @@ public class MainActivity extends Activity {
 		registerAddButton();
 		registerRerackButton();
 		registerFoulButton();
-	}
-
-	private void createProfiles(Bundle extras) {
-		ArrayList<String> parsableProfiles = extras.getStringArrayList("game");
-		Profile[] profiles = new Profile[parsableProfiles.size() / 6];
-		ArrayList<ArrayList<String>> dividedProfiles = new ArrayList<ArrayList<String>>();
-		for (int i = 0; i < parsableProfiles.size() / 6; i++) {
-			dividedProfiles.add(new ArrayList<String>());
-		}
-		for (int i = 0; i < parsableProfiles.size(); i++) {
-			dividedProfiles.get(i / 6).add(parsableProfiles.get(i));
-		}
-		for (int i = 0; i < dividedProfiles.size(); i++) {
-			String date = dividedProfiles.get(i).get(2);
-			GregorianCalendar bday = new GregorianCalendar(Integer.valueOf(date.split("-")[2]), Integer.valueOf(date.split("-")[1]), Integer.valueOf(date
-					.split("-")[0]));
-			profiles[i] = new Profile(i + "", dividedProfiles.get(i).get(0), dividedProfiles.get(i).get(1), bday, dividedProfiles.get(i).get(3), null,
-					dividedProfiles.get(i).get(4), dividedProfiles.get(i).get(5));
-		}
-
-		game = new Game(profiles);
 	}
 
 	@Override
@@ -343,7 +369,7 @@ public class MainActivity extends Activity {
 
 		for (final Profile profile : game.getPlayers()) {
 			View view = LayoutInflater.from(this).inflate(R.layout.caption_profile, null);
-			Button profileView = (Button) view.findViewById(R.id.profile_button);
+			final Button profileView = (Button) view.findViewById(R.id.profile_button);
 			profileView.setText(profile.getFirstName());
 			profileView.setOnClickListener(new OnClickListener() {
 
@@ -351,13 +377,16 @@ public class MainActivity extends Activity {
 					showProfileInfo(profile);
 				}
 			});
-			if (profile.getPicture() != null) {
-				profileView.setCompoundDrawablesWithIntrinsicBounds(null, new BitmapDrawable(getResources(), profile.getPicture()), null, null);
-			} else {
-				profileView.setCompoundDrawablesWithIntrinsicBounds(null,
-						new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), android.R.drawable.ic_menu_report_image)), null, null);
-			}
 
+			new PictureRetriever(profile.getFacebookId(), profile.getTwitterId()){
+			
+				@Override
+				public void onPostExecute(Bitmap bmp) {
+					profileView.setCompoundDrawablesWithIntrinsicBounds(null, new BitmapDrawable(getResources(),bmp), null, null);
+
+				}
+			}.execute();
+			
 			profileContainer.addView(view, params);
 		}
 	}
@@ -377,7 +406,7 @@ public class MainActivity extends Activity {
 		name.setText(profile.getFirstName() + " " + profile.getLastName());
 		bday.setText(dateString);
 		currentAverage.setText(Double.toString(profile.getCurrentGameAverage()));
-		
+
 		dialog = builder.setTitle(profile.getFirstName()).setView(view).create();
 		dialog.show();
 
@@ -415,7 +444,7 @@ public class MainActivity extends Activity {
 		game.setRemainingBalls(savedRemainingBalls);
 		registerPickerRemainingBalls();
 	}
-	
+
 	private ArrayList<Round> roundsAsList() {
 		ArrayList<Round> rounds = new ArrayList<Round>();
 		for (int i = 0; i < scoreAdapter.getCount(); i++) {
@@ -449,7 +478,6 @@ public class MainActivity extends Activity {
 			registerPickerRemainingBalls();
 			registerRerackButton();
 		}
-		
 
 		game.decreaseTurnIndex();
 	}

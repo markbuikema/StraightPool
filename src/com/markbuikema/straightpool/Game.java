@@ -1,9 +1,8 @@
 package com.markbuikema.straightpool;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.Serializable;
 
-public class Game {
+public class Game implements Serializable{
 
 	private int playerCount;
 	private Profile[] players;

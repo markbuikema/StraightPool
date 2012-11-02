@@ -1,34 +1,28 @@
 package com.markbuikema.straightpool;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
-import android.graphics.Bitmap;
-
-public class Profile {
+public class Profile implements Serializable{
 
 	private String firstName;
 	private String lastName;
 	private GregorianCalendar birthday;
 	private String facebookId;
 	private String twitterId;
-	private Bitmap picture;
-	private String pictureUrl;
 	private int score;
 	private String id;
 	private double currentGameAverage;
 	private ArrayList<Integer> currentGameScores;
 
-	public Profile(String id, String firstName, String lastName, GregorianCalendar birthday, String pictureUrl, Bitmap picture, String facebookId,
-			String twitterId) {
+	public Profile(String id, String firstName, String lastName, GregorianCalendar birthday, String facebookId, String twitterId) {
 		this.id = id;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthday = birthday;
-		this.picture = picture;
 		this.facebookId = facebookId;
 		this.twitterId = twitterId;
-		this.pictureUrl = pictureUrl;
 		currentGameAverage = 0.0;
 		currentGameScores = new ArrayList<Integer>();
 	}
@@ -39,10 +33,6 @@ public class Profile {
 
 	public void setCurrentGameAverage(double currentGameAverage) {
 		this.currentGameAverage = currentGameAverage;
-	}
-
-	public String getPictureUrl() {
-		return pictureUrl;
 	}
 
 	public int getScore() {
@@ -75,10 +65,6 @@ public class Profile {
 
 	public String getTwitterId() {
 		return twitterId;
-	}
-
-	public Bitmap getPicture() {
-		return picture;
 	}
 
 	public String getId() {

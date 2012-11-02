@@ -114,7 +114,7 @@ public class CreateProfileActivity extends Activity {
 		facebookImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_facebook);
 		twitterImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_twitter);
 
-		facebook = FacebookInstance.get(this);
+		facebook = FacebookInstance.get();
 		am.setContext(this);
 
 		pdb = ProfileDatabase.getInstance(CreateProfileActivity.this);
@@ -324,7 +324,7 @@ public class CreateProfileActivity extends Activity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			pdb.open();
-			pdb.createEntry(firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, pictureUrl, facebookId, twitterId);
+			pdb.createEntry(firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, facebookId, twitterId);
 
 			while (entryCount == pdb.getCount()) {
 			}
@@ -346,7 +346,7 @@ public class CreateProfileActivity extends Activity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			pdb.open();
-			pdb.replace(profileId, firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, pictureUrl, facebookId, twitterId);
+			pdb.replace(profileId, firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate,  facebookId, twitterId);
 
 			pdb.close();
 
@@ -756,7 +756,14 @@ public class CreateProfileActivity extends Activity {
 				twitterLoader.setVisibility(View.GONE);
 			}
 
-			pictureView.setImageBitmap(bmp);
+			new PictureRetriever(facebookId,twitterId) {
+				
+				@Override
+				protected void onPostExecute(Bitmap result) {
+					pictureView.setImageBitmap(result);
+				};
+				
+			}.execute();
 		}
 
 	}

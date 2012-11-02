@@ -54,7 +54,6 @@ public class ProfileManagerActivity extends Activity {
 	public static final String KEY_LASTNAME = "lastname";
 	public static final String KEY_ROWID = "_id";
 	public static final String KEY_BIRTHDATE = "birthdate";
-	public static final String KEY_PICTURE_URL = "pic_url";
 	public static final String KEY_FACEBOOK_ID = "fbid";
 	public static final String KEY_TWITTER_ID = "twitterid";
 
@@ -65,16 +64,16 @@ public class ProfileManagerActivity extends Activity {
 	private ProfileDatabase db;
 	private Facebook facebook;
 	private Handler mHandler;
-	
+
 	private int cellWidth;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_profile_manager);
 		db = ProfileDatabase.getInstance(this);
-		facebook = FacebookInstance.get(this);
+		facebook = FacebookInstance.get();
 		mHandler = new Handler(getMainLooper());
-		
+
 		setScreenDimensions();
 
 		profileList = (GridView) findViewById(R.id.gridview_profiles);
@@ -90,7 +89,6 @@ public class ProfileManagerActivity extends Activity {
 				i.putExtra("first", profile.getFirstName());
 				i.putExtra("last", profile.getLastName());
 				i.putExtra("bday", profile.getBirthday());
-				i.putExtra("url", profile.getPictureUrl());
 				i.setClass(ProfileManagerActivity.this, CreateProfileActivity.class);
 				startActivity(i);
 			}
@@ -116,10 +114,10 @@ public class ProfileManagerActivity extends Activity {
 		Display display = wm.getDefaultDisplay();
 		Point p = new Point();
 		display.getSize(p);
-		
-		cellWidth = (int) ((p.x - 2* getResources().getDimension(R.dimen.default_margin))/COLUMN_COUNT);
+
+		cellWidth = (int) ((p.x - 2 * getResources().getDimension(R.dimen.default_margin)) / COLUMN_COUNT);
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -146,22 +144,9 @@ public class ProfileManagerActivity extends Activity {
 				int year = Integer.valueOf(bday.split("-")[2]);
 				birthday.set(year, month, day);
 
-				URL url = null;
-				Bitmap picture = null;
-				try {
-					url = new URL(profiles.getString(profiles.getColumnIndex(KEY_PICTURE_URL)));
-					picture = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
 				publishProgress(new Profile(profiles.getString(profiles.getColumnIndex(KEY_ROWID)),
 						profiles.getString(profiles.getColumnIndex(KEY_FIRSTNAME)), profiles.getString(profiles.getColumnIndex(KEY_LASTNAME)), birthday,
-						profiles.getString(profiles.getColumnIndex(KEY_PICTURE_URL)), picture, profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID)),
-						profiles.getString(profiles.getColumnIndex(KEY_TWITTER_ID))));
+						profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID)), profiles.getString(profiles.getColumnIndex(KEY_TWITTER_ID))));
 			}
 			profiles.close();
 			return null;
@@ -234,7 +219,7 @@ public class ProfileManagerActivity extends Activity {
 						String url = data.getString("url");
 
 						db.open();
-						db.createEntry(firstName, lastName, bday, url, id, null);
+						db.createEntry(firstName, lastName, bday, id, null);
 						db.close();
 
 						mHandler.post(new Runnable() {
@@ -340,13 +325,13 @@ public class ProfileManagerActivity extends Activity {
 		detailDialog = dialogBuilder.setTitle("User profile").setView(view).setPositiveButton("OK", new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface dialog, int which) {
-//				if (infoIsValid()) { TODO
-					db.open();
-					db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null, null);
-					db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null, null);
-					new ProfilePopulator().execute(db.fetchAllEntries());
+				// if (infoIsValid()) { TODO
+				db.open();
+				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null);
+				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null);
+				new ProfilePopulator().execute(db.fetchAllEntries());
 
-//				}
+				// }
 
 			}
 
@@ -393,14 +378,16 @@ public class ProfileManagerActivity extends Activity {
 			}
 
 			view.setLayoutParams(new GridView.LayoutParams(cellWidth, cellWidth));
-			
-			ImageView picture = (ImageView) view.findViewById(R.id.imageview_profile_pic);
+
+			final ImageView picture = (ImageView) view.findViewById(R.id.imageview_profile_pic);
 			TextView name = (TextView) view.findViewById(R.id.textview_profile_name);
-			if (getItem(p).getPicture() != null) {
-				picture.setImageBitmap(getItem(p).getPicture());
-			} else {
-				picture.setImageBitmap(BitmapFactory.decodeResource(ProfileManagerActivity.this.getResources(), android.R.drawable.ic_menu_report_image));
-			}
+
+			new PictureRetriever(getItem(p).getFacebookId(), getItem(p).getTwitterId()){
+				@Override
+				protected void onPostExecute(Bitmap bmp) {
+					picture.setImageBitmap(bmp);
+				}
+			}.execute();
 			name.setText(getItem(p).getFirstName() + " " + getItem(p).getLastName());
 
 			return view;
