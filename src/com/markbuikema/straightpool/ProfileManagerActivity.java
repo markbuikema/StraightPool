@@ -10,6 +10,7 @@ import java.util.Locale;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -19,16 +20,20 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
+import android.widget.AbsListView.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -53,11 +58,15 @@ public class ProfileManagerActivity extends Activity {
 	public static final String KEY_FACEBOOK_ID = "fbid";
 	public static final String KEY_TWITTER_ID = "twitterid";
 
+	private static final int COLUMN_COUNT = 3;
+
 	private GridView profileList;
 	private ProfileAdapter adapter;
 	private ProfileDatabase db;
 	private Facebook facebook;
 	private Handler mHandler;
+	
+	private int cellWidth;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -65,6 +74,8 @@ public class ProfileManagerActivity extends Activity {
 		db = ProfileDatabase.getInstance(this);
 		facebook = FacebookInstance.get(this);
 		mHandler = new Handler(getMainLooper());
+		
+		setScreenDimensions();
 
 		profileList = (GridView) findViewById(R.id.gridview_profiles);
 		adapter = new ProfileAdapter(this, 0);
@@ -99,6 +110,16 @@ public class ProfileManagerActivity extends Activity {
 		return true;
 	}
 
+	@SuppressLint("NewApi")
+	private void setScreenDimensions() {
+		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+		Display display = wm.getDefaultDisplay();
+		Point p = new Point();
+		display.getSize(p);
+		
+		cellWidth = (int) ((p.x - 2* getResources().getDimension(R.dimen.default_margin))/COLUMN_COUNT);
+	}
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -371,6 +392,8 @@ public class ProfileManagerActivity extends Activity {
 				view = LayoutInflater.from(ProfileManagerActivity.this).inflate(R.layout.list_item_profile, null);
 			}
 
+			view.setLayoutParams(new GridView.LayoutParams(cellWidth, cellWidth));
+			
 			ImageView picture = (ImageView) view.findViewById(R.id.imageview_profile_pic);
 			TextView name = (TextView) view.findViewById(R.id.textview_profile_name);
 			if (getItem(p).getPicture() != null) {

@@ -33,5 +33,8 @@
     <string name="button_create">Create</string>
     <string name="menu_start">Start game</string>
     <string name="title_activity_create_game">Select players</string>
+    <string name="label_name">Name</string>
+    <string name="label_bday">Birthday</string>
+    <string name="label_currentaverage">"Current average"</string>
 
 </resources>

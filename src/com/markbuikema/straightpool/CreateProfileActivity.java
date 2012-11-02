@@ -747,39 +747,18 @@ public class CreateProfileActivity extends Activity {
 
 		public void onPostExecute(Bitmap bmp) {
 			if (mediaType == FACEBOOK) {
-				facebookIcon.setImageBitmap(getRoundedCornerBitmap(bmp, 4));
+				facebookIcon.setImageBitmap(bmp);
 				facebookLink.setText("Linked to " + name + "'s Facebook account");
 				facebookLoader.setVisibility(View.GONE);
 			} else {
-				twitterIcon.setImageBitmap(getRoundedCornerBitmap(bmp, 4));
+				twitterIcon.setImageBitmap(bmp);
 				twitterLink.setText("Linked to " + name + "'s Twitter account");
 				twitterLoader.setVisibility(View.GONE);
 			}
 
-			pictureView.setImageBitmap(getRoundedCornerBitmap(bmp, 4));
+			pictureView.setImageBitmap(bmp);
 		}
 
-	}
-
-	public Bitmap getRoundedCornerBitmap(Bitmap bitmap, int pixels) {
-		Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Config.ARGB_8888);
-		Canvas canvas = new Canvas(output);
-
-		final int color = Color.WHITE;
-		final Paint paint = new Paint();
-		final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-		final RectF rectF = new RectF(rect);
-		final float roundPx = pixels;
-
-		paint.setAntiAlias(true);
-		canvas.drawARGB(0, 0, 0, 0);
-		paint.setColor(color);
-		canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-
-		paint.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
-		canvas.drawBitmap(bitmap, rect, rect, paint);
-
-		return output;
 	}
 
 	private class TwitterListItem {

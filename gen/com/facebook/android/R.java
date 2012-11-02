@@ -15,6 +15,7 @@ public final class R {
     }
     public static final class color {
         public static final int blue=0x7f050000;
+        public static final int transparentblack=0x7f050001;
     }
     public static final class dimen {
         public static final int default_margin=0x7f060000;
@@ -49,19 +50,22 @@ public final class R {
         public static final int edittext_lastname=0x7f0a0003;
         public static final int gridview_profiles=0x7f0a0018;
         public static final int horizontalScrollView1=0x7f0a001b;
-        public static final int icon=0x7f0a0026;
+        public static final int icon=0x7f0a002c;
         public static final int imageview_facebook=0x7f0a0005;
-        public static final int imageview_profile_pic=0x7f0a0028;
+        public static final int imageview_profile_pic=0x7f0a002e;
         public static final int imageview_profilepic=0x7f0a0001;
         public static final int imageview_twitter=0x7f0a0009;
+        public static final int label_birthday=0x7f0a0028;
+        public static final int label_currentaverage=0x7f0a002a;
+        public static final int label_name=0x7f0a0026;
         public static final int linearlayout_caption_profiles=0x7f0a0013;
         public static final int listview_score=0x7f0a0014;
         public static final int listview_settings=0x7f0a0019;
-        public static final int menu_add_profile=0x7f0a002f;
-        public static final int menu_import=0x7f0a002c;
-        public static final int menu_play=0x7f0a002b;
-        public static final int menu_revert=0x7f0a002e;
-        public static final int menu_save=0x7f0a002d;
+        public static final int menu_add_profile=0x7f0a0036;
+        public static final int menu_import=0x7f0a0033;
+        public static final int menu_play=0x7f0a0032;
+        public static final int menu_revert=0x7f0a0035;
+        public static final int menu_save=0x7f0a0034;
         public static final int picker_remaining_balls=0x7f0a0012;
         public static final int profile_button=0x7f0a001a;
         public static final int progressBar1=0x7f0a0025;
@@ -75,9 +79,13 @@ public final class R {
         public static final int radiogroup_foultypes=0x7f0a001f;
         public static final int scrollView1=0x7f0a0000;
         public static final int scrollView2=0x7f0a001d;
-        public static final int textview_medium=0x7f0a0027;
-        public static final int textview_profile_name=0x7f0a0029;
-        public static final int textview_setting=0x7f0a002a;
+        public static final int textview_medium=0x7f0a002d;
+        public static final int textview_profile_name=0x7f0a0030;
+        public static final int textview_setting=0x7f0a0031;
+        public static final int transparentoverlay=0x7f0a002f;
+        public static final int value_birthday=0x7f0a0029;
+        public static final int value_currentaverage=0x7f0a002b;
+        public static final int value_name=0x7f0a0027;
     }
     public static final class layout {
         public static final int activity_create_profile=0x7f030000;
@@ -89,11 +97,12 @@ public final class R {
         public static final int dialog_datepicker=0x7f030006;
         public static final int dialog_foul=0x7f030007;
         public static final int dialog_loading=0x7f030008;
-        public static final int dialog_userprofile=0x7f030009;
-        public static final int list_item_import=0x7f03000a;
-        public static final int list_item_profile=0x7f03000b;
-        public static final int list_item_profile_picker=0x7f03000c;
-        public static final int list_item_setting=0x7f03000d;
+        public static final int dialog_profileinfo=0x7f030009;
+        public static final int dialog_userprofile=0x7f03000a;
+        public static final int list_item_import=0x7f03000b;
+        public static final int list_item_profile=0x7f03000c;
+        public static final int list_item_profile_picker=0x7f03000d;
+        public static final int list_item_setting=0x7f03000e;
     }
     public static final class menu {
         public static final int activity_create_game=0x7f090000;
@@ -118,6 +127,9 @@ public final class R {
         public static final int hint_firstname=0x7f070015;
         public static final int hint_lastname=0x7f070016;
         public static final int import_contacts=0x7f07001a;
+        public static final int label_bday=0x7f070022;
+        public static final int label_currentaverage=0x7f070023;
+        public static final int label_name=0x7f070021;
         public static final int male=0x7f070018;
         public static final int menu_end=0x7f070007;
         public static final int menu_newprofile=0x7f070013;

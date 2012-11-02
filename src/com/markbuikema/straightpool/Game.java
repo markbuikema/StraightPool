@@ -1,7 +1,9 @@
 package com.markbuikema.straightpool;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 
-public class Game  {
+public class Game {
 
 	private int playerCount;
 	private Profile[] players;
@@ -70,6 +72,8 @@ public class Game  {
 		return rerackAddition;
 	}
 
+
+
 	public void rerack() {
 		// remainingBalls = 15;
 		rerackAddition += 14;
@@ -105,7 +109,5 @@ public class Game  {
 	public void setRound(int round) {
 		this.round = round;
 	}
-
-	
 
 }

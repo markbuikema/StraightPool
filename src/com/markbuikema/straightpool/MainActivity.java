@@ -2,6 +2,7 @@ package com.markbuikema.straightpool;
 
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -340,10 +341,16 @@ public class MainActivity extends Activity {
 
 		profileContainer.addView(round, params);
 
-		for (Profile profile : game.getPlayers()) {
+		for (final Profile profile : game.getPlayers()) {
 			View view = LayoutInflater.from(this).inflate(R.layout.caption_profile, null);
 			Button profileView = (Button) view.findViewById(R.id.profile_button);
 			profileView.setText(profile.getFirstName());
+			profileView.setOnClickListener(new OnClickListener() {
+
+				public void onClick(View v) {
+					showProfileInfo(profile);
+				}
+			});
 			if (profile.getPicture() != null) {
 				profileView.setCompoundDrawablesWithIntrinsicBounds(null, new BitmapDrawable(getResources(), profile.getPicture()), null, null);
 			} else {
@@ -353,6 +360,27 @@ public class MainActivity extends Activity {
 
 			profileContainer.addView(view, params);
 		}
+	}
+
+	private void showProfileInfo(Profile profile) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog dialog;
+		View view = LayoutInflater.from(this).inflate(R.layout.dialog_profileinfo, null);
+		TextView name = (TextView) view.findViewById(R.id.value_name);
+		TextView bday = (TextView) view.findViewById(R.id.value_birthday);
+		TextView currentAverage = (TextView) view.findViewById(R.id.value_currentaverage);
+
+		GregorianCalendar date = profile.getBirthday();
+		String dateString = date.get(GregorianCalendar.DAY_OF_MONTH) + " "
+				+ date.getDisplayName(GregorianCalendar.MONTH, GregorianCalendar.LONG, Locale.US) + " " + date.get(GregorianCalendar.YEAR);
+
+		name.setText(profile.getFirstName() + " " + profile.getLastName());
+		bday.setText(dateString);
+		currentAverage.setText(Double.toString(profile.getCurrentGameAverage()));
+		
+		dialog = builder.setTitle(profile.getFirstName()).setView(view).create();
+		dialog.show();
+
 	}
 
 	private void registerAddButton() {
@@ -373,7 +401,6 @@ public class MainActivity extends Activity {
 		pickerRemainingBalls.setWrapSelectorWheel(false);
 		pickerRemainingBalls.setValue(14);
 		pickerRemainingBalls.setValue(15);
-
 	}
 
 	private void rerack() {
@@ -387,6 +414,14 @@ public class MainActivity extends Activity {
 		game.resetReracks();
 		game.setRemainingBalls(savedRemainingBalls);
 		registerPickerRemainingBalls();
+	}
+	
+	private ArrayList<Round> roundsAsList() {
+		ArrayList<Round> rounds = new ArrayList<Round>();
+		for (int i = 0; i < scoreAdapter.getCount(); i++) {
+			rounds.add(scoreAdapter.getItem(i));
+		}
+		return rounds;
 	}
 
 	private void revert() {
@@ -414,6 +449,7 @@ public class MainActivity extends Activity {
 			registerPickerRemainingBalls();
 			registerRerackButton();
 		}
+		
 
 		game.decreaseTurnIndex();
 	}
@@ -422,12 +458,14 @@ public class MainActivity extends Activity {
 		game.addRound();
 
 		int turnIndex = game.getAndIncreaseTurnIndex();
+		int score = (game.getRemainingBalls() - pickerRemainingBalls.getValue()) + game.getRerackAddition();
 
-		game.getPlayers()[turnIndex].appendToScore((game.getRemainingBalls() - pickerRemainingBalls.getValue()) + game.getRerackAddition());
+		game.getPlayers()[turnIndex].appendToScore(score);
 		int[] scores = new int[game.getPlayerCount()];
 		for (int i = 0; i < scores.length; i++) {
 			scores[i] = game.getPlayers()[i].getScore();
 		}
+
 		scoreAdapter.add(new Round(pickerRemainingBalls.getValue(), game.getRound(), scores));
 
 		game.setRemainingBalls(pickerRemainingBalls.getValue());
