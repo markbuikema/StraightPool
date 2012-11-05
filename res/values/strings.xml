@@ -8,7 +8,7 @@
     <string name="title_auth_twitter">Login to Twitter</string>
     <string name="menu_revert">Revert turn</string>
     <string name="menu_end">End game</string>
-    <string name="add_to_list">Add to list</string>
+    <string name="add_to_list">Next player</string>
     <string name="rerack">Re-rack</string>
     <string name="foul">Foul</string>
     <string name="new_game">New game</string>

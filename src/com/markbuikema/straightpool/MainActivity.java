@@ -12,7 +12,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
@@ -26,8 +25,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnHoverListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -45,6 +46,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -412,6 +414,7 @@ public class MainActivity extends Activity {
 
 	}
 
+	@SuppressLint("NewApi")
 	private void registerAddButton() {
 		addButton = (Button) findViewById(R.id.button_add);
 		addButton.setOnClickListener(new OnClickListener() {
@@ -419,6 +422,13 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				addRound();
 				registerPickerRemainingBalls();
+			}
+		});
+		addButton.setOnHoverListener(new OnHoverListener() {
+			
+			public boolean onHover(View v, MotionEvent event) {
+				Toast.makeText(MainActivity.this, "Click here to add the round to the list", Toast.LENGTH_SHORT).show();
+				return false;
 			}
 		});
 	}
