@@ -17,6 +17,7 @@
             android:background="?android:attr/selectableItemBackground"
             android:drawableLeft="@android:drawable/ic_menu_add"
             android:drawablePadding="@dimen/default_margin"
+            android:contentDescription="Click here to add the score to the list and move to the next player."
             android:gravity="left|center_vertical"
             android:text="@string/add_to_list" />
 
@@ -29,6 +30,7 @@
             android:background="?android:attr/selectableItemBackground"
             android:drawableLeft="@android:drawable/ic_menu_rotate"
             android:drawablePadding="@dimen/default_margin"
+            android:contentDescription="When there is only one ball left on the table, click here to re-rack."
             android:gravity="left|center_vertical"
             android:text="@string/rerack" />
 
@@ -42,6 +44,7 @@
             android:drawableLeft="@android:drawable/ic_menu_close_clear_cancel"
             android:drawablePadding="@dimen/default_margin"
             android:gravity="left|center_vertical"
+            android:contentDescription="Click here to subtract points from a player."
             android:text="@string/foul" />
     </LinearLayout>
 

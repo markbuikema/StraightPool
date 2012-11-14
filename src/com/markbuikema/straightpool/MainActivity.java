@@ -1,154 +1,236 @@
 package com.markbuikema.straightpool;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.Locale;
+import java.util.HashMap;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnHoverListener;
-import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
-import android.widget.NumberPicker;
-import android.widget.NumberPicker.OnValueChangeListener;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.RadioGroup.OnCheckedChangeListener;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.facebook.android.DialogError;
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
+import com.facebook.android.Facebook.DialogListener;
 
 public class MainActivity extends Activity {
 
+	private GridView playerPickerList;
+	private ListView savedGamesList;
+	private Button startGameButton;
+
 	public static final String KEY_FIRSTNAME = "firstname";
-
 	public static final String KEY_LASTNAME = "lastname";
-
 	public static final String KEY_ROWID = "_id";
-
 	public static final String KEY_BIRTHDATE = "birthdate";
-
 	public static final String KEY_FACEBOOK_ID = "fbid";
-
 	public static final String KEY_TWITTER_ID = "twitterid";
 
-	private static final int LIST_COLUMN_WIDTH = 150;
+	public static final int COLUMN_COUNT = 4;
 
-	private NumberPicker pickerRemainingBalls;
-	private ListView scoreList;
-	private LinearLayout profileContainer;
-	private Game game;
-	private ScoreAdapter scoreAdapter;
-	private int screenWidth;
-	private int screenHeight;
-	private int savedRemainingBalls = 1;
+	private ProfileDatabase pdb;
+	private ProfileAdapter profileAdapter;
 
-	private Button addButton;
-	private Button rerackButton;
-	private Button foulButton;
+	private Facebook facebook;
 
-	protected PowerManager.WakeLock wakeLock;
+	private int cellWidth;
 
-	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		setContentView(R.layout.activity_menu);
 		super.onCreate(savedInstanceState);
-		wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(
-				PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "My Tag");
+		pdb = ProfileDatabase.getInstance(this);
 
-		Bundle extras = getIntent().getExtras();
-
-		ArrayList<String> ids = (ArrayList<String>) extras.getSerializable("profile_ids");
-		ArrayList<Profile> profiles = new ArrayList<Profile>();
-		ProfileDatabase mDb = ProfileDatabase.getInstance(this);
-		mDb.open();
-
-		Cursor c = mDb.fetchAllEntries();
-
-		while (c.moveToNext()) {
-
-			String first = c.getString(c.getColumnIndex(KEY_FIRSTNAME));
-			String last = c.getString(c.getColumnIndex(KEY_LASTNAME));
-			String id = c.getString(c.getColumnIndex(KEY_ROWID));
-			String facebookId = c.getString(c.getColumnIndex(KEY_FACEBOOK_ID));
-			String twitterId = c.getString(c.getColumnIndex(KEY_TWITTER_ID));
-			String dateString = c.getString(c.getColumnIndex(KEY_BIRTHDATE));
-			GregorianCalendar birthday = new GregorianCalendar();
-			int day = Integer.valueOf(dateString.split("-")[0]);
-			int month = Integer.valueOf(dateString.split("-")[1]);
-			int year = Integer.valueOf(dateString.split("-")[2]);
-			birthday.set(year, month, day);
-			if (ids.contains(id)) {
-				profiles.add(new Profile(id, first, last, birthday, facebookId, twitterId));
-			}
-		}
-		c.close();
-		mDb.close();
-
-		Profile[] array = new Profile[profiles.size()];
-		for (int i = 0; i < array.length; i++) {
-			array[i] = profiles.get(i);
-		}
-
-		game = new Game(array);
-
-		setContentView(R.layout.activity_main);
-
-		SharedPreferences prefs = getSharedPreferences("settings", 0);
-		setWakeLock(prefs.getBoolean("wakelock", false));
-
+		facebook = FacebookInstance.get();
 		setScreenDimensions();
-		registerProfilesCaption();
-		registerPickerRemainingBalls();
-		registerScoreList();
-		registerAddButton();
-		registerRerackButton();
-		registerFoulButton();
+
+		playerPickerList = (GridView) findViewById(R.id.gridview_playerpicker);
+		playerPickerList.setNumColumns(COLUMN_COUNT);
+		savedGamesList = (ListView) findViewById(R.id.listview_savedgames);
+		startGameButton = (Button) findViewById(R.id.button_start);
+
+		profileAdapter = new ProfileAdapter(this, 0);
+
+		playerPickerList.setAdapter(profileAdapter);
+		playerPickerList.setOnItemClickListener(new OnItemClickListener() {
+
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+				profileAdapter.toggle(arg2);
+			}
+
+		});
+
+		startGameButton.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+				ArrayList<String> selected = new ArrayList<String>();
+				for (int i = 0; i < profileAdapter.getCount(); i++) {
+					Profile p = profileAdapter.getItem(i);
+					if (profileAdapter.isSelected(i)) {
+						selected.add(p.getId());
+					}
+				}
+
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setClass(MainActivity.this, GameActivity.class);
+
+				i.putExtra("profile_ids", selected);
+				startActivity(i);
+			}
+		});
+
 	}
 
 	@Override
-	public void onStop() {
-		super.onStop();
-		setWakeLock(false);
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		FacebookInstance.get().authorizeCallback(requestCode, resultCode, data);
+
+		invalidateOptionsMenu();
 	}
 
-	private void setWakeLock(boolean wakeLock) {
-		if (wakeLock) {
-			this.wakeLock.acquire();
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+
+		getMenuInflater().inflate(R.menu.activity_profile_manager, menu);
+
+		return true;
+	}
+
+	@Override
+	public boolean onPrepareOptionsMenu(final Menu menu) {
+		if (facebook.isSessionValid()) {
+			menu.findItem(R.id.menu_facebook).setIcon(null).setTitle("Logging in...");
+			new PictureRetriever("me") {
+				@Override
+				public void onPostExecute(HashMap<String, Object> bmp) {
+					menu.findItem(R.id.menu_facebook).setIcon(new BitmapDrawable(getResources(), getBitmapWithFacebookOverlay((Bitmap) bmp.get("picture"))))
+							.setTitle("Logged in as " + bmp.get("name"));
+				}
+			}.execute();
 		} else {
-			if (this.wakeLock.isHeld()) {
-				this.wakeLock.release();
+			menu.findItem(R.id.menu_facebook)
+					.setIcon(new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.ic_facebook)))
+					.setTitle("Login to Facebook");
+		}
+		return true;
+	}
+
+	protected Bitmap getBitmapWithFacebookOverlay(Bitmap bitmap) {
+
+		Bitmap map = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+		int[] allpixels = new int[bitmap.getHeight() * bitmap.getWidth()];
+
+		bitmap.getPixels(allpixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+		map.setPixels(allpixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+		Canvas c = new Canvas(map);
+		Rect rect = c.getClipBounds();
+		rect.right = rect.right / 2;
+		rect.top = rect.bottom / 2;
+		Paint paint = new Paint();
+		c.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_facebook), null, rect, paint);
+		return map;
+	}
+
+	private class Logout extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			try {
+				facebook.logout(MainActivity.this);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+		
+		@Override
+		public void onPostExecute(Void v) {
+			invalidateOptionsMenu();
+		}
+
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_add_profile:
+			Intent i = new Intent(Intent.ACTION_VIEW);
+			i.setClass(this, CreateProfileActivity.class);
+			i.putExtra("userprofile", false);
+			startActivity(i);
+			break;
+		case R.id.menu_facebook:
+			if (facebook.isSessionValid()) {
+
+				new Logout().execute();
+
+			} else {
+
+				facebookLogin();
+
 			}
 		}
+		return false;
+	}
+
+	private void facebookLogin() {
+		String[] permissions = new String[] { "user_about_me", "user_birthday", "friends_birthday" };
+		facebook.authorize(this, permissions, new DialogListener() {
+
+			public void onComplete(Bundle values) {
+				Log.d("FB ACCESS TOKEN ", facebook.getAccessToken());
+				SharedPreferences settings = getSharedPreferences("settings", 0);
+				SharedPreferences.Editor editor = settings.edit();
+				editor.putString("facebook", facebook.getAccessToken());
+				editor.apply();
+
+			}
+
+			public void onFacebookError(FacebookError error) {
+			}
+
+			public void onError(DialogError e) {
+			}
+
+			public void onCancel() {
+			}
+		});
 	}
 
 	@SuppressLint("NewApi")
@@ -157,438 +239,137 @@ public class MainActivity extends Activity {
 		Display display = wm.getDefaultDisplay();
 		Point p = new Point();
 		display.getSize(p);
-		screenWidth = p.x;
-		screenHeight = p.y;
+
+		cellWidth = (int) ((Math.min(p.x, p.y) - 2 * getResources().getDimension(R.dimen.default_margin)) / COLUMN_COUNT);
 	}
 
-	// TODO INITIALISATION (no todo, just bookmark)
+	private class ProfileAdapter extends ArrayAdapter<Profile> {
 
-	private void registerFoulButton() {
+		private ArrayList<Boolean> selected;
 
-		foulButton = (Button) findViewById(R.id.button_foul);
-		foulButton.setOnClickListener(new OnClickListener() {
+		public ProfileAdapter(Context context, int textViewResourceId) {
+			super(context, textViewResourceId);
+			selected = new ArrayList<Boolean>();
 
-			public void onClick(View v) {
-
-				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-				AlertDialog dialog;
-
-				final View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_foul, null);
-				final RadioGroup profileContainer = (RadioGroup) view.findViewById(R.id.radiogroup_foul_profiles);
-				final int blue = MainActivity.this.getResources().getColor(R.color.blue);
-				for (Profile profile : game.getPlayers()) {
-					RadioButton radio = new RadioButton(MainActivity.this);
-					radio.setText(profile.getFirstName());
-					profileContainer.addView(radio);
-				}
-				((RadioButton) profileContainer.getChildAt(0)).setChecked(true);
-				((RadioButton) profileContainer.getChildAt(0)).setTextColor(blue);
-
-				profileContainer.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-					public void onCheckedChanged(RadioGroup group, int checkedId) {
-						for (int i = 0; i < group.getChildCount(); i++) {
-							((RadioButton) group.getChildAt(i)).setTextColor(Color.BLACK);
-						}
-						((RadioButton) view.findViewById(checkedId)).setTextColor(blue);
-					}
-				});
-				final RadioGroup foulTypeSelector = (RadioGroup) view.findViewById(R.id.radiogroup_foultypes);
-				final EditText customFoulType = (EditText) view.findViewById(R.id.edittext_customfoul);
-				customFoulType.setText("-");
-				customFoulType.addTextChangedListener(new TextWatcher() {
-
-					public void afterTextChanged(Editable s) {
-					}
-
-					public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-					}
-
-					public void onTextChanged(CharSequence s, int start, int before, int count) {
-						if (!s.toString().startsWith("-")) {
-							customFoulType.setText("-" + String.valueOf(customFoulType.getText()).replace("-", ""));
-							customFoulType.setSelection(customFoulType.getText().length());
-						}
-						if (customFoulType.getSelectionStart() == 0) {
-							customFoulType.setSelection(1);
-						}
-					}
-
-				});
-				foulTypeSelector.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-					public void onCheckedChanged(RadioGroup group, int checkedId) {
-						if (checkedId == R.id.radiobutton_customfoul) {
-							customFoulType.setVisibility(View.VISIBLE);
-							customFoulType.requestFocus();
-							customFoulType.setSelection(customFoulType.getText().length());
-						} else {
-							customFoulType.setVisibility(View.INVISIBLE);
-						}
-
-						for (int i = 0; i < group.getChildCount(); i++) {
-							((RadioButton) group.getChildAt(i)).setTextColor(Color.BLACK);
-						}
-						((RadioButton) view.findViewById(checkedId)).setTextColor(blue);
-					}
-				});
-
-				dialog = builder.setTitle("Foul").setView(view).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
-					public void onClick(DialogInterface dialog, int which) {
-						int index = profileContainer.indexOfChild(profileContainer.findViewById(profileContainer.getCheckedRadioButtonId()));
-						Log.d("foul profile index", index + "");
-
-						int amount;
-						switch (foulTypeSelector.indexOfChild(foulTypeSelector.findViewById(foulTypeSelector.getCheckedRadioButtonId()))) {
-						case 0:
-							amount = 1;
-							break;
-						case 1:
-							amount = 2;
-							break;
-						case 2:
-							amount = 15;
-							break;
-						case 3:
-							try {
-								amount = Integer.valueOf(String.valueOf(customFoulType.getText()).replace("-", ""));
-							} catch (NumberFormatException e) {
-								amount = 0;
-							}
-							break;
-						default:
-							amount = 0;
-						}
-						if (scoreAdapter.getCount() > 0) {
-							scoreAdapter.getItem(scoreAdapter.getCount() - 1).reduceScore(index, amount);
-						} else {
-							int[] score = new int[game.getPlayerCount()];
-							for (int i = 0; i < game.getPlayerCount(); i++) {
-								score[i] = 0;
-								if (i == index) {
-									score[i] = -amount;
-								}
-							}
-							game.setRound(game.getRound() + 1);
-							scoreAdapter.add(new Round(game.getRemainingBalls(), 1, score));
-						}
-						game.getPlayers()[index].setScore(game.getPlayers()[index].getScore() - amount);
-						scoreAdapter.notifyDataSetChanged();
-						dialog.dismiss();
-					}
-				}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				}).create();
-				dialog.show();
-
-			}
-
-		});
-	}
-
-	private void registerRerackButton() {
-
-		rerackButton = (Button) findViewById(R.id.button_rerack);
-		rerackButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				if (game.getRerackAddition() == 0) {
-					savedRemainingBalls = game.getRemainingBalls();
-				}
-				rerack();
-				registerRerackButton();
-			}
-		});
-
-		rerackButton.setOnLongClickListener(new OnLongClickListener() {
-
-			public boolean onLongClick(View v) {
-				if (game.getRerackAddition() > 0) {
-					unRerack();
-					registerRerackButton();
-				}
-				return true;
-			}
-		});
-
-		if (game.getRerackAddition() > 0) {
-			rerackButton.setText("Re-rack (" + String.valueOf(game.getRerackAddition() / 14) + ")");
-		} else {
-			rerackButton.setText("Re-rack");
 		}
-	}
 
-	private void registerPickerRemainingBalls() {
-		pickerRemainingBalls = (NumberPicker) findViewById(R.id.picker_remaining_balls);
-		pickerRemainingBalls.setMinValue(1);
-		pickerRemainingBalls.setMaxValue(game.getRemainingBalls());
-		pickerRemainingBalls.setWrapSelectorWheel(false);
-		pickerRemainingBalls.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-		pickerRemainingBalls.setOnValueChangedListener(new OnValueChangeListener() {
+		@Override
+		public void add(Profile p) {
+			selected.add(getCount() == 0);
+			super.add(p);
+		}
 
-			public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-				if (newVal == 1) {
-					addButton.setEnabled(false);
-				} else {
-					addButton.setEnabled(true);
+		public boolean isSelected(int index) {
+			return selected.get(index);
+		}
+
+		public int getSelectedCount() {
+			int count = 0;
+			for (boolean s : selected) {
+				if (s) {
+					count++;
 				}
 			}
-		});
-		pickerRemainingBalls.setValue(game.getRemainingBalls() - 1);
-		pickerRemainingBalls.setValue(game.getRemainingBalls());
+			return count;
+		}
 
-	}
+		public void toggle(int index) {
+			selected.set(index, !selected.get(index));
 
-	private void registerScoreList() {
-		scoreList = (ListView) findViewById(R.id.listview_score);
-		scoreAdapter = new ScoreAdapter(this, 0);
-		scoreList.setAdapter(scoreAdapter);
-		LayoutParams params = new LayoutParams((game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH, LayoutParams.MATCH_PARENT);
-		scoreList.setLayoutParams(params);
-		scoreList.setDividerHeight(0);
+			if (getSelectedCount() == 0) {
+				selected.set(index, true);
+			}
 
-	}
+			notifyDataSetChanged();
+		}
 
-	private void registerProfilesCaption() {
-		profileContainer = (LinearLayout) findViewById(R.id.linearlayout_caption_profiles);
+		@SuppressLint("NewApi")
+		public View getView(int p, View view, ViewGroup parent) {
 
-		LayoutParams containerParams = new LayoutParams((game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH, LayoutParams.WRAP_CONTENT);
-		containerParams.gravity = Gravity.CENTER_HORIZONTAL;
-		profileContainer.setLayoutParams(containerParams);
+			if (view == null) {
+				view = LayoutInflater.from(MainActivity.this).inflate(R.layout.list_item_profile, null);
+			}
 
-		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, 1.0f);
+			view.setLayoutParams(new GridView.LayoutParams(cellWidth, cellWidth));
 
-		TextView round = new TextView(this);
-		round.setText("Round");
-		round.setTextSize(18);
-		round.setGravity(Gravity.BOTTOM | Gravity.LEFT);
+			final ImageView picture = (ImageView) view.findViewById(R.id.imageview_profile_pic);
+			TextView name = (TextView) view.findViewById(R.id.textview_profile_name);
+			LinearLayout border = (LinearLayout) view.findViewById(R.id.linearlayout_border);
+			final ProgressBar loader = (ProgressBar) view.findViewById(R.id.progressBar1);
 
-		profileContainer.addView(round, params);
-
-		for (final Profile profile : game.getPlayers()) {
-			View view = LayoutInflater.from(this).inflate(R.layout.caption_profile, null);
-			final Button profileView = (Button) view.findViewById(R.id.profile_button);
-			profileView.setText(profile.getFirstName());
-			profileView.setOnClickListener(new OnClickListener() {
-
-				public void onClick(View v) {
-					showProfileInfo(profile);
-				}
-			});
-
-			new PictureRetriever(profile.getFacebookId(), profile.getTwitterId()){
-			
+			new PictureRetriever(getItem(p).getFacebookId()) {
 				@Override
-				public void onPostExecute(Bitmap bmp) {
-					profileView.setCompoundDrawablesWithIntrinsicBounds(null, new BitmapDrawable(getResources(),bmp), null, null);
-
+				protected void onPostExecute(HashMap<String, Object> bmp) {
+					picture.setImageBitmap((Bitmap) bmp.get("picture"));
+					loader.setVisibility(View.INVISIBLE);
 				}
 			}.execute();
-			
-			profileContainer.addView(view, params);
-		}
-	}
+			name.setText(getItem(p).getFirstName() + " " + getItem(p).getLastName());
 
-	private void showProfileInfo(Profile profile) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		AlertDialog dialog;
-		View view = LayoutInflater.from(this).inflate(R.layout.dialog_profileinfo, null);
-		TextView name = (TextView) view.findViewById(R.id.value_name);
-		TextView bday = (TextView) view.findViewById(R.id.value_birthday);
-		TextView currentAverage = (TextView) view.findViewById(R.id.value_currentaverage);
-
-		GregorianCalendar date = profile.getBirthday();
-		String dateString = date.get(GregorianCalendar.DAY_OF_MONTH) + " "
-				+ date.getDisplayName(GregorianCalendar.MONTH, GregorianCalendar.LONG, Locale.US) + " " + date.get(GregorianCalendar.YEAR);
-
-		name.setText(profile.getFirstName() + " " + profile.getLastName());
-		bday.setText(dateString);
-		currentAverage.setText(Double.toString(profile.getCurrentGameAverage()));
-
-		dialog = builder.setTitle(profile.getFirstName()).setView(view).create();
-		dialog.show();
-
-	}
-
-	@SuppressLint("NewApi")
-	private void registerAddButton() {
-		addButton = (Button) findViewById(R.id.button_add);
-		addButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				addRound();
-				registerPickerRemainingBalls();
-			}
-		});
-		addButton.setOnHoverListener(new OnHoverListener() {
-			
-			public boolean onHover(View v, MotionEvent event) {
-				Toast.makeText(MainActivity.this, "Click here to add the round to the list", Toast.LENGTH_SHORT).show();
-				return false;
-			}
-		});
-	}
-
-	// TODO end initialisation (no todo, just bookmark)
-
-	private void resetPickerMax() {
-		pickerRemainingBalls.setMaxValue(15);
-		pickerRemainingBalls.setWrapSelectorWheel(false);
-		pickerRemainingBalls.setValue(14);
-		pickerRemainingBalls.setValue(15);
-	}
-
-	private void rerack() {
-		game.rerack();
-		registerPickerRemainingBalls();
-		resetPickerMax();
-		addButton.setEnabled(true);
-	}
-
-	private void unRerack() {
-		game.resetReracks();
-		game.setRemainingBalls(savedRemainingBalls);
-		registerPickerRemainingBalls();
-	}
-
-	private ArrayList<Round> roundsAsList() {
-		ArrayList<Round> rounds = new ArrayList<Round>();
-		for (int i = 0; i < scoreAdapter.getCount(); i++) {
-			rounds.add(scoreAdapter.getItem(i));
-		}
-		return rounds;
-	}
-
-	private void revert() {
-
-		scoreAdapter.remove(scoreAdapter.getItem(scoreAdapter.getCount() - 1));
-
-		if (scoreAdapter.getCount() == 0) {
-			for (Profile p : game.getPlayers()) {
-				p.setScore(0);
-			}
-			game.setRemainingBalls(15);
-			registerPickerRemainingBalls();
-			registerRerackButton();
-			game.setRound(0);
-		} else {
-
-			LinearLayout newLastRow = (LinearLayout) scoreAdapter.getView(scoreAdapter.getCount() - 1, null, null);
-			int count = newLastRow.getChildCount() - 1;
-			for (int i = 0; i < count; i++) {
-				game.getPlayers()[i].setScore(Integer.valueOf((String) ((TextView) newLastRow.getChildAt(i + 1)).getText()));
-			}
-			game.setRound(Integer.valueOf((String) ((TextView) newLastRow.getChildAt(0)).getText()));
-			game.setRemainingBalls(scoreAdapter.getItem(scoreAdapter.getCount() - 1).getRemainingBalls());
-
-			registerPickerRemainingBalls();
-			registerRerackButton();
-		}
-
-		game.decreaseTurnIndex();
-	}
-
-	private void addRound() {
-		game.addRound();
-
-		int turnIndex = game.getAndIncreaseTurnIndex();
-		int score = (game.getRemainingBalls() - pickerRemainingBalls.getValue()) + game.getRerackAddition();
-
-		game.getPlayers()[turnIndex].appendToScore(score);
-		int[] scores = new int[game.getPlayerCount()];
-		for (int i = 0; i < scores.length; i++) {
-			scores[i] = game.getPlayers()[i].getScore();
-		}
-
-		scoreAdapter.add(new Round(pickerRemainingBalls.getValue(), game.getRound(), scores));
-
-		game.setRemainingBalls(pickerRemainingBalls.getValue());
-		game.resetReracks();
-
-		registerRerackButton();
-		registerPickerRemainingBalls();
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-
-		getMenuInflater().inflate(R.menu.activity_main, menu);
-		SharedPreferences settings = getSharedPreferences("settings", 0);
-		menu.findItem(R.id.menu_save).setVisible(!settings.getBoolean("autosave", false));
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-
-		switch (item.getItemId()) {
-		case R.id.menu_revert:
-			if (scoreAdapter.getCount() > 0) {
-				revert();
+			if (isSelected(p)) {
+				border.setVisibility(View.VISIBLE);
+				picture.setImageAlpha(255);
 			} else {
-				// TODO melding
-			}
-
-		}
-
-		return false;
-
-	}
-
-	private class ScoreAdapter extends ArrayAdapter<Round> {
-
-		int previousCount;
-
-		public ScoreAdapter(Context context, int textViewResourceId) {
-			super(context, textViewResourceId);
-			previousCount = getCount();
-		}
-
-		@Override
-		public boolean isEnabled(int p) {
-			return false;
-		}
-
-		@Override
-		public View getView(int p, View view, ViewGroup group) {
-			view = new LinearLayout(MainActivity.this);
-
-			LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, 1);
-
-			Round round = getItem(p);
-
-			TextView number = new TextView(MainActivity.this);
-			number.setText(String.valueOf(round.getNumber()));
-			number.setGravity(Gravity.LEFT);
-
-			((ViewGroup) view).addView(number, params);
-
-			for (int score : round.getScore()) {
-				TextView scoreView = new TextView(MainActivity.this);
-				scoreView.setText(String.valueOf(score));
-				scoreView.setGravity(Gravity.CENTER_HORIZONTAL);
-				((ViewGroup) view).addView(scoreView, params);
-
-			}
-
-			if (p == getCount() - 1 && getCount() > previousCount) {
-				Animation animation = AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_top_to_bottom);
-				view.startAnimation(animation);
-				previousCount = getCount();
+				border.setVisibility(View.INVISIBLE);
+				picture.setImageAlpha(100);
 			}
 
 			return view;
+
+		}
+
+	}
+
+	@Override
+	public void onResume() {
+		new PopulateProfiles().execute();
+		super.onResume();
+	}
+
+	private class PopulateProfiles extends AsyncTask<Void, Profile, Void> {
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			pdb.open();
+			Cursor profiles = pdb.fetchAllEntries();
+			profiles.moveToFirst();
+			while (profiles.moveToNext()) {
+				GregorianCalendar birthday = new GregorianCalendar();
+				String bday = profiles.getString(profiles.getColumnIndex(KEY_BIRTHDATE));
+				int day = Integer.valueOf(bday.split("-")[0]);
+				int month = Integer.valueOf(bday.split("-")[1]);
+				int year = Integer.valueOf(bday.split("-")[2]);
+				birthday.set(year, month, day);
+
+				publishProgress(new Profile(profiles.getString(profiles.getColumnIndex(KEY_ROWID)),
+						profiles.getString(profiles.getColumnIndex(KEY_FIRSTNAME)), profiles.getString(profiles.getColumnIndex(KEY_LASTNAME)), birthday,
+						profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID))));
+			}
+			profiles.close();
+			return null;
 		}
 
 		@Override
-		public void add(Round round) {
-			super.add(round);
-			scoreList.smoothScrollToPosition(getCount() - 1);
+		public void onPreExecute() {
+			profileAdapter.clear();
+		}
 
+		@Override
+		protected void onProgressUpdate(Profile... p) {
+			for (Profile profile : p) {
+				profileAdapter.add(profile);
+			}
+		}
+
+		@Override
+		public void onPostExecute(Void v) {
+			pdb.close();
+			if (profileAdapter.getCount() == 0) {
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setClass(MainActivity.this, InitializationActivity.class);
+				startActivity(i);
+				finish();
+			}
 		}
 
 	}

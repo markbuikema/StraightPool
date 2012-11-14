@@ -3,14 +3,13 @@ package com.markbuikema.straightpool;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Locale;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -19,7 +18,6 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -30,10 +28,9 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
-import android.widget.AbsListView.LayoutParams;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -55,7 +52,6 @@ public class ProfileManagerActivity extends Activity {
 	public static final String KEY_ROWID = "_id";
 	public static final String KEY_BIRTHDATE = "birthdate";
 	public static final String KEY_FACEBOOK_ID = "fbid";
-	public static final String KEY_TWITTER_ID = "twitterid";
 
 	private static final int COLUMN_COUNT = 3;
 
@@ -85,7 +81,6 @@ public class ProfileManagerActivity extends Activity {
 				Profile profile = adapter.getItem(arg2);
 				i.putExtra("profileId", profile.getId());
 				i.putExtra("facebookId", profile.getFacebookId());
-				i.putExtra("twitterId", profile.getTwitterId());
 				i.putExtra("first", profile.getFirstName());
 				i.putExtra("last", profile.getLastName());
 				i.putExtra("bday", profile.getBirthday());
@@ -108,7 +103,6 @@ public class ProfileManagerActivity extends Activity {
 		return true;
 	}
 
-	@SuppressLint("NewApi")
 	private void setScreenDimensions() {
 		WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
 		Display display = wm.getDefaultDisplay();
@@ -146,7 +140,7 @@ public class ProfileManagerActivity extends Activity {
 
 				publishProgress(new Profile(profiles.getString(profiles.getColumnIndex(KEY_ROWID)),
 						profiles.getString(profiles.getColumnIndex(KEY_FIRSTNAME)), profiles.getString(profiles.getColumnIndex(KEY_LASTNAME)), birthday,
-						profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID)), profiles.getString(profiles.getColumnIndex(KEY_TWITTER_ID))));
+						profiles.getString(profiles.getColumnIndex(KEY_FACEBOOK_ID))));
 			}
 			profiles.close();
 			return null;
@@ -214,12 +208,9 @@ public class ProfileManagerActivity extends Activity {
 						} else {
 							bday = null;
 						}
-						JSONObject picture = output.getJSONObject("picture");
-						JSONObject data = picture.getJSONObject("data");
-						String url = data.getString("url");
 
 						db.open();
-						db.createEntry(firstName, lastName, bday, id, null);
+						db.createEntry(firstName, lastName, bday, id);
 						db.close();
 
 						mHandler.post(new Runnable() {
@@ -232,6 +223,7 @@ public class ProfileManagerActivity extends Activity {
 
 						});
 
+						
 					} catch (JSONException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -327,8 +319,8 @@ public class ProfileManagerActivity extends Activity {
 			public void onClick(DialogInterface dialog, int which) {
 				// if (infoIsValid()) { TODO
 				db.open();
-				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null);
-				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null, null);
+				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null);
+				db.createEntry(first.getText().toString(), last.getText().toString(), birthDate, null);
 				new ProfilePopulator().execute(db.fetchAllEntries());
 
 				// }
@@ -382,10 +374,10 @@ public class ProfileManagerActivity extends Activity {
 			final ImageView picture = (ImageView) view.findViewById(R.id.imageview_profile_pic);
 			TextView name = (TextView) view.findViewById(R.id.textview_profile_name);
 
-			new PictureRetriever(getItem(p).getFacebookId(), getItem(p).getTwitterId()){
+			new PictureRetriever(getItem(p).getFacebookId()){
 				@Override
-				protected void onPostExecute(Bitmap bmp) {
-					picture.setImageBitmap(bmp);
+				protected void onPostExecute(HashMap<String,Object> bmp) {
+					picture.setImageBitmap((Bitmap) bmp.get("picture"));
 				}
 			}.execute();
 			name.setText(getItem(p).getFirstName() + " " + getItem(p).getLastName());

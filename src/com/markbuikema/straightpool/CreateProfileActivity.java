@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Locale;
 
 import org.json.JSONArray;
@@ -20,15 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -64,18 +57,17 @@ import com.facebook.android.FacebookError;
 public class CreateProfileActivity extends Activity {
 
 	public static final int FACEBOOK = 0;
-	public static final int TWITTER = 1;
 	public static final int CONTACT = 2;
+
+	public static final int MODE_USER = 0;
+	public static final int MODE_NEW_PROFILE = 1;
 
 	private String profileId;
 
 	private ProfileDatabase pdb;
-	private int entryCount;
 
 	private GregorianCalendar birthDate;
-	private String pictureUrl;
 	private String facebookId;
-	private String twitterId;
 
 	private EditText birthDateView;
 	private EditText firstNameView;
@@ -83,44 +75,39 @@ public class CreateProfileActivity extends Activity {
 	private Button cancelButton;
 	private Button createButton;
 
+	private int mode;
+
 	private Facebook facebook;
 
 	private Handler mHandler = new Handler();
 	private Button facebookLink;
-	private Button twitterLink;
 
-	private AuthorizationManager am = AuthorizationManager.getInstance();
 	private ImageView facebookIcon;
-	private ImageView twitterIcon;
 	private ProgressBar facebookLoader;
-	private ProgressBar twitterLoader;
 	private ImageView pictureView;
 	private Button facebookCancel;
-	private Button twitterCancel;
 
 	private Bitmap facebookImage;
-	private Bitmap twitterImage;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_create_profile);
 
+		if (getIntent().getBooleanExtra("userprofile", false)) {
+			mode = MODE_USER;
+		} else {
+			mode = MODE_NEW_PROFILE;
+		}
+
 		profileId = getIntent().getStringExtra("profileId");
 
-		pictureUrl = getIntent().getStringExtra("url");
-		twitterId = getIntent().getStringExtra("twitterId");
 		facebookId = getIntent().getStringExtra("facebookId");
 
 		facebookImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_facebook);
-		twitterImage = BitmapFactory.decodeResource(getResources(), R.drawable.ic_twitter);
 
 		facebook = FacebookInstance.get();
-		am.setContext(this);
 
 		pdb = ProfileDatabase.getInstance(CreateProfileActivity.this);
-		pdb.open();
-		entryCount = pdb.getCount();
-		pdb.close();
 
 		cancelButton = (Button) findViewById(R.id.button_cancel);
 		createButton = (Button) findViewById(R.id.button_create);
@@ -129,16 +116,12 @@ public class CreateProfileActivity extends Activity {
 		lastNameView = (EditText) findViewById(R.id.edittext_lastname);
 
 		facebookLink = (Button) findViewById(R.id.button_facebooklink);
-		twitterLink = (Button) findViewById(R.id.button_twitterlink);
 
 		facebookIcon = (ImageView) findViewById(R.id.imageview_facebook);
-		twitterIcon = (ImageView) findViewById(R.id.imageview_twitter);
 
 		facebookLoader = (ProgressBar) findViewById(R.id.progressbar_facebook);
-		twitterLoader = (ProgressBar) findViewById(R.id.progressbar_twitter);
 
 		facebookCancel = (Button) findViewById(R.id.button_removefacebook);
-		twitterCancel = (Button) findViewById(R.id.button_removetwitter);
 
 		pictureView = (ImageView) findViewById(R.id.imageview_profilepic);
 
@@ -146,14 +129,6 @@ public class CreateProfileActivity extends Activity {
 		lastNameView.setText(getIntent().getStringExtra("last") == null ? "" : getIntent().getStringExtra("last"));
 
 		onBirthdayChanged((GregorianCalendar) getIntent().getSerializableExtra("bday"));
-
-		if (pictureUrl != null) {
-			new PutPicture().execute();
-		}
-
-		if (twitterId != null) {
-			onTwitterLinkChanged(twitterId);
-		}
 
 		if (facebookId != null) {
 			onFacebookLinkChanged(facebookId);
@@ -163,19 +138,24 @@ public class CreateProfileActivity extends Activity {
 			createButton.setText("Edit");
 		}
 
+		if (mode == MODE_USER) {
+			cancelButton.setText("Back");
+			setTitle("Please enter your details");
+			createButton.setText("Continue");
+			pictureView.setVisibility(View.GONE);
+			findViewById(R.id.linearlayout_facebook).setVisibility(View.GONE);
+		}
+		
+		if (!facebook.isSessionValid()) {
+			pictureView.setVisibility(View.GONE);
+			findViewById(R.id.linearlayout_facebook).setVisibility(View.GONE);
+		}
+
 		facebookLink.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
 				new FacebookFriendsPicker().execute(false);
 				facebookLink.setEnabled(false);
-			}
-		});
-
-		twitterLink.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				new LinkTwitter().execute();
-				twitterLink.setEnabled(false);
 			}
 		});
 
@@ -189,29 +169,11 @@ public class CreateProfileActivity extends Activity {
 			}
 		});
 
-		twitterLink.setOnLongClickListener(new OnLongClickListener() {
-
-			public boolean onLongClick(View v) {
-				if (twitterId != null) {
-					twitterCancel.setVisibility(View.VISIBLE);
-				}
-				return false;
-			}
-		});
-
 		facebookCancel.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
 				onFacebookLinkChanged(null);
 				facebookCancel.setVisibility(View.GONE);
-			}
-		});
-
-		twitterCancel.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				onTwitterLinkChanged(null);
-				twitterCancel.setVisibility(View.GONE);
 			}
 		});
 
@@ -261,6 +223,11 @@ public class CreateProfileActivity extends Activity {
 		cancelButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View v) {
+				if (mode == MODE_USER) {
+					Intent i = new Intent(Intent.ACTION_VIEW);
+					i.setClass(CreateProfileActivity.this, InitializationActivity.class);
+					startActivity(i);
+				}
 				finish();
 			}
 		});
@@ -324,9 +291,9 @@ public class CreateProfileActivity extends Activity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			pdb.open();
-			pdb.createEntry(firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, facebookId, twitterId);
-
-			while (entryCount == pdb.getCount()) {
+			pdb.createEntry(firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, facebookId);
+			if (mode == MODE_USER) {
+				pdb.createEntry(firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, facebookId);
 			}
 
 			pdb.close();
@@ -336,6 +303,11 @@ public class CreateProfileActivity extends Activity {
 
 		@Override
 		public void onPostExecute(Void v) {
+			if (mode == MODE_USER) {
+				Intent i = new Intent(Intent.ACTION_VIEW);
+				i.setClass(CreateProfileActivity.this, MainActivity.class);
+				startActivity(i);
+			}
 			finish();
 		}
 
@@ -346,7 +318,7 @@ public class CreateProfileActivity extends Activity {
 		@Override
 		protected Void doInBackground(Void... params) {
 			pdb.open();
-			pdb.replace(profileId, firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate,  facebookId, twitterId);
+			pdb.replace(profileId, firstNameView.getText().toString(), lastNameView.getText().toString(), birthDate, facebookId);
 
 			pdb.close();
 
@@ -363,7 +335,9 @@ public class CreateProfileActivity extends Activity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
-		getMenuInflater().inflate(R.menu.activity_create_profile, menu);
+		if (mode == MODE_NEW_PROFILE) {
+			getMenuInflater().inflate(R.menu.activity_create_profile, menu);
+		}
 		return true;
 	}
 
@@ -411,7 +385,11 @@ public class CreateProfileActivity extends Activity {
 				public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
 					switch (arg2) {
 					case 0:
-						readFacebook();
+						if (facebook.isSessionValid()) {
+							readFacebook();
+						} else {
+							readContacts();
+						}
 						break;
 					case 1:
 						readContacts();
@@ -675,17 +653,6 @@ public class CreateProfileActivity extends Activity {
 		facebookCancel.setVisibility(View.GONE);
 	}
 
-	public void onTwitterLinkChanged(String id) {
-		this.twitterId = id;
-		if (twitterId != null) {
-			new PutLinkData(twitterId, TWITTER).execute();
-		} else {
-			twitterLink.setText("Not linked to Twitter");
-			twitterIcon.setImageBitmap(twitterImage);
-		}
-		twitterCancel.setVisibility(View.GONE);
-	}
-
 	public class PutLinkData extends AsyncTask<Void, Void, Bitmap> {
 
 		private String facebookId;
@@ -715,20 +682,7 @@ public class CreateProfileActivity extends Activity {
 					name = object.getString("name");
 					URL facebookUrl = new URL("https://graph.facebook.com/" + facebookId + "/picture?type=square&method=GET&access_token="
 							+ facebook.getAccessToken());
-					pictureUrl = facebookUrl.toExternalForm();
 					bitmap = BitmapFactory.decodeStream(facebookUrl.openConnection().getInputStream());
-					break;
-				case TWITTER:
-					mHandler.post(new Runnable() {
-						public void run() {
-							twitterLoader.setVisibility(View.VISIBLE);
-						}
-					});
-					JSONArray users = new JSONArray(TwitterAuthActivity.getContent("https://api.twitter.com/1/users/lookup.json?user_id=" + twitterId));
-					name = users.getJSONObject(0).getString("name");
-					URL twitterUrl = new URL("https://api.twitter.com/1/users/profile_image/" + twitterId + ".json?size=normal");
-					pictureUrl = twitterUrl.toExternalForm();
-					bitmap = BitmapFactory.decodeStream(twitterUrl.openConnection().getInputStream());
 					break;
 
 				}
@@ -746,141 +700,20 @@ public class CreateProfileActivity extends Activity {
 		}
 
 		public void onPostExecute(Bitmap bmp) {
-			if (mediaType == FACEBOOK) {
-				facebookIcon.setImageBitmap(bmp);
-				facebookLink.setText("Linked to " + name + "'s Facebook account");
-				facebookLoader.setVisibility(View.GONE);
-			} else {
-				twitterIcon.setImageBitmap(bmp);
-				twitterLink.setText("Linked to " + name + "'s Twitter account");
-				twitterLoader.setVisibility(View.GONE);
-			}
+			facebookIcon.setImageBitmap(bmp);
+			facebookLink.setText("Linked to " + name + "'s Facebook account");
+			facebookLoader.setVisibility(View.GONE);
 
-			new PictureRetriever(facebookId,twitterId) {
-				
+			new PictureRetriever(facebookId) {
+
 				@Override
-				protected void onPostExecute(Bitmap result) {
-					pictureView.setImageBitmap(result);
+				protected void onPostExecute(HashMap<String,Object> result) {
+					pictureView.setImageBitmap((Bitmap) result.get("picture"));
 				};
-				
+
 			}.execute();
 		}
 
-	}
-
-	private class TwitterListItem {
-		private String name;
-		private String id;
-
-		public TwitterListItem(String name, String id) {
-			this.name = name;
-			this.id = id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-	}
-
-	private class LinkTwitter extends AsyncTask<Void, Void, Void> {
-
-		private ArrayAdapter<TwitterListItem> adapter;
-		private AlertDialog loader;
-
-		public LinkTwitter() {
-
-			adapter = new ArrayAdapter<TwitterListItem>(CreateProfileActivity.this, 0) {
-				public View getView(int p, View v, ViewGroup vg) {
-					if (v == null) {
-						v = LayoutInflater.from(CreateProfileActivity.this).inflate(R.layout.list_item_import, null);
-					}
-
-					ImageView icon = (ImageView) v.findViewById(R.id.icon);
-					icon.setVisibility(View.GONE);
-
-					TextView name = (TextView) v.findViewById(R.id.textview_medium);
-					name.setText(getItem(p).getName());
-
-					return v;
-				}
-			};
-		}
-
-		@Override
-		protected Void doInBackground(Void... params) {
-
-			publishProgress();
-
-			try {
-				JSONObject json = new JSONObject(TwitterAuthActivity.getContent("https://api.twitter.com/1/friends/ids.json"));
-
-				JSONArray ids = json.getJSONArray("ids");
-
-				String idString = ids.toString().substring(1, ids.toString().length() - 1);
-
-				JSONArray users = new JSONArray(TwitterAuthActivity.getContent("https://api.twitter.com/1/users/lookup.json?user_id=" + idString));
-				for (int i = 0; i < users.length(); i++) {
-					adapter.add(new TwitterListItem(users.getJSONObject(i).getString("name"), users.getJSONObject(i).getString("id")));
-				}
-				mHandler.post(new Runnable() {
-
-					public void run() {
-						AlertDialog.Builder builder = new AlertDialog.Builder(CreateProfileActivity.this);
-						ListView list = new ListView(CreateProfileActivity.this);
-						final AlertDialog dialog = builder.setTitle("Link to Twitter").setView(list).create();
-						list.setAdapter(adapter);
-						list.setOnItemClickListener(new OnItemClickListener() {
-
-							public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-								TwitterListItem item = adapter.getItem(arg2);
-								onTwitterLinkChanged(item.getId());
-
-								dialog.dismiss();
-
-							}
-						});
-						dialog.setOnDismissListener(new OnDismissListener() {
-
-							public void onDismiss(DialogInterface dialog) {
-								twitterLink.setEnabled(true);
-							}
-						});
-						dialog.show();
-					}
-				});
-
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			return null;
-		}
-
-		@Override
-		public void onProgressUpdate(Void... v) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(CreateProfileActivity.this);
-			View view = LayoutInflater.from(CreateProfileActivity.this).inflate(R.layout.dialog_loading, null);
-			loader = builder.setTitle("Loading Twitter contacts...").setView(view).create();
-			loader.setOnDismissListener(new OnDismissListener() {
-
-				public void onDismiss(DialogInterface dialog) {
-					twitterLink.setEnabled(true);
-				}
-			});
-			loader.show();
-
-		}
-
-		@Override
-		public void onPostExecute(Void v) {
-			loader.dismiss();
-		}
 	}
 
 	public void readContacts() {
@@ -1010,18 +843,6 @@ public class CreateProfileActivity extends Activity {
 				e.printStackTrace();
 			}
 			break;
-		}
-
-	}
-
-	private class PutPicture extends AsyncTask<Void, Void, Void> {
-
-		@Override
-		protected Void doInBackground(Void... params) {
-
-			// TODO
-
-			return null;
 		}
 
 	}

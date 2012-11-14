@@ -1,13 +1,13 @@
 <resources>
 
-    <string name="app_name">Straight Pool</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="menu_save">Save</string>
-    <string name="title_activity_main">Straight pool</string>
-    <string name="title_activity_settings">Settings</string>
-    <string name="title_auth_twitter">Login to Twitter</string>
-    <string name="menu_revert">Revert turn</string>
-    <string name="menu_end">End game</string>
+    <string name="app_name">Straight Pool</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_save">Save</string>
+    <string name="title_activity_main">Straight pool</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="menu_revert">Revert turn</string>
+    <string name="menu_end">End game</string>
+    <string name="menu_facebook">Facebook</string>
     <string name="add_to_list">Next player</string>
     <string name="rerack">Re-rack</string>
     <string name="foul">Foul</string>
@@ -16,7 +16,7 @@
     <string name="foul1">-1</string>
     <string name="foul2">-2</string>
     <string name="foul15">-15</string>
-    <string name="foulcustom">...</string>
+    <string name="foulcustom">…</string>
     <string name="profile_manager">Profiles</string>
     <string name="title_profiles">Profiles</string>
     <string name="menu_newprofile">Create new profile</string>
@@ -28,7 +28,6 @@
     <string name="female">Female</string>
     <string name="import_contacts">Import</string>
     <string name="facebook_notlinked">Not linked to Facebook</string>
-    <string name="twitter_notlinked">Not linked to Twitter</string>
     <string name="button_cancel">Cancel</string>
     <string name="button_create">Create</string>
     <string name="menu_start">Start game</string>
@@ -36,5 +35,13 @@
     <string name="label_name">Name</string>
     <string name="label_bday">Birthday</string>
     <string name="label_currentaverage">"Current average"</string>
+    <string name="newgame">New game</string>
+    <string name="othergames">Other games</string>
+    <string name="startgame">Start</string>
+    <string name="login">Login</string>
+    <string name="welcome">Welcome!</string>
+    <string name="skip">Skip</string>
+    <string name="welcome_message">This is the first time you use this app. If you have Facebook, please login.</string>
+    <string name="facebook_notloggedin">Not logged in to Facebook</string>
 
 </resources>

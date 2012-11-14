@@ -1,6 +1,5 @@
 package com.markbuikema.straightpool;
 
-import java.io.Serializable;
 import java.util.GregorianCalendar;
 
 import android.content.ContentValues;
@@ -12,7 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-public class ProfileDatabase implements Serializable {
+public class ProfileDatabase {
 
 	private static ProfileDatabase instance;
 
@@ -26,14 +25,13 @@ public class ProfileDatabase implements Serializable {
 
 	public static final String KEY_FACEBOOK_ID = "fbid";
 
-	public static final String KEY_TWITTER_ID = "twitterid";
 
 	private static final String TAG = "NotesDbAdapter";
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
 
 	private static final String DATABASE_CREATE = "create table profiles (_id integer primary key autoincrement, "
-			+ "firstname text not null, lastname text not null, birthdate text not null, fbid text, twitterid text);";
+			+ "firstname text not null, lastname text not null, birthdate text not null, fbid text);";
 
 	private static final String DATABASE_NAME = "profileDatabase";
 	private static final String DATABASE_TABLE = "profiles";
@@ -102,7 +100,7 @@ public class ProfileDatabase implements Serializable {
 		mDbHelper.close();
 	}
 
-	public long createEntry(String firstname, String lastname, GregorianCalendar birthdate, String fbid, String twitterid) {
+	public long createEntry(String firstname, String lastname, GregorianCalendar birthdate, String fbid) {
 		String birthdateString = birthdate.get(GregorianCalendar.DAY_OF_MONTH) + "-" + birthdate.get(GregorianCalendar.MONTH) + "-"
 				+ birthdate.get(GregorianCalendar.YEAR) + "";
 		ContentValues initialValues = new ContentValues();
@@ -110,7 +108,6 @@ public class ProfileDatabase implements Serializable {
 		initialValues.put(KEY_LASTNAME, lastname);
 		initialValues.put(KEY_BIRTHDATE, birthdateString);
 		initialValues.put(KEY_FACEBOOK_ID, fbid);
-		initialValues.put(KEY_TWITTER_ID, twitterid);
 
 		return mDb.insert(DATABASE_TABLE, null, initialValues);
 	}
@@ -134,12 +131,12 @@ public class ProfileDatabase implements Serializable {
 	 */
 	public Cursor fetchAllEntries() {
 
-		return mDb.query(DATABASE_TABLE, new String[] { KEY_ROWID, KEY_FIRSTNAME, KEY_LASTNAME, KEY_BIRTHDATE, KEY_FACEBOOK_ID, KEY_TWITTER_ID }, null,
+		return mDb.query(DATABASE_TABLE, new String[] { KEY_ROWID, KEY_FIRSTNAME, KEY_LASTNAME, KEY_BIRTHDATE, KEY_FACEBOOK_ID }, null,
 				null, null, null, (KEY_ROWID + " ASC"));
 	}
 
 	
-	public void replace(String profileId, String firstname, String lastname, GregorianCalendar birthdate, String fbid, String twitterid) {
+	public void replace(String profileId, String firstname, String lastname, GregorianCalendar birthdate, String fbid) {
 
 		String birthdateString = birthdate.get(GregorianCalendar.DAY_OF_MONTH) + "-" + birthdate.get(GregorianCalendar.MONTH) + "-"
 				+ birthdate.get(GregorianCalendar.YEAR) + "";
@@ -149,7 +146,6 @@ public class ProfileDatabase implements Serializable {
 		initialValues.put(KEY_LASTNAME, lastname);
 		initialValues.put(KEY_BIRTHDATE, birthdateString);
 		initialValues.put(KEY_FACEBOOK_ID, fbid);
-		initialValues.put(KEY_TWITTER_ID, twitterid);
 
 		mDb.replace(DATABASE_TABLE, null, initialValues);
 

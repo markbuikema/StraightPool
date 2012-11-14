@@ -1,28 +1,25 @@
 package com.markbuikema.straightpool;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
-public class Profile implements Serializable{
+public class Profile{
 
 	private String firstName;
 	private String lastName;
 	private GregorianCalendar birthday;
 	private String facebookId;
-	private String twitterId;
 	private int score;
 	private String id;
 	private double currentGameAverage;
 	private ArrayList<Integer> currentGameScores;
 
-	public Profile(String id, String firstName, String lastName, GregorianCalendar birthday, String facebookId, String twitterId) {
+	public Profile(String id, String firstName, String lastName, GregorianCalendar birthday, String facebookId) {
 		this.id = id;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthday = birthday;
 		this.facebookId = facebookId;
-		this.twitterId = twitterId;
 		currentGameAverage = 0.0;
 		currentGameScores = new ArrayList<Integer>();
 	}
@@ -63,9 +60,7 @@ public class Profile implements Serializable{
 		return facebookId;
 	}
 
-	public String getTwitterId() {
-		return twitterId;
-	}
+
 
 	public String getId() {
 		return id;
