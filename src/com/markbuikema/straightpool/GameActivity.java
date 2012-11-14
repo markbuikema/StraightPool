@@ -42,7 +42,6 @@ import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.ListView;
 import android.widget.NumberPicker;
-import android.widget.NumberPicker.OnValueChangeListener;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
@@ -74,7 +73,6 @@ public class GameActivity extends Activity {
 	private int screenHeight;
 	private int savedRemainingBalls = 1;
 
-	private Button addButton;
 	private Button rerackButton;
 	private Button foulButton;
 
@@ -130,7 +128,6 @@ public class GameActivity extends Activity {
 		registerProfilesCaption();
 		registerPickerRemainingBalls();
 		registerScoreList();
-		registerAddButton();
 		registerRerackButton();
 		registerFoulButton();
 	}
@@ -330,16 +327,7 @@ public class GameActivity extends Activity {
 		pickerRemainingBalls.setMaxValue(game.getRemainingBalls());
 		pickerRemainingBalls.setWrapSelectorWheel(false);
 		pickerRemainingBalls.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
-		pickerRemainingBalls.setOnValueChangedListener(new OnValueChangeListener() {
 
-			public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-				if (newVal == 1) {
-					addButton.setEnabled(false);
-				} else {
-					addButton.setEnabled(true);
-				}
-			}
-		});
 		pickerRemainingBalls.setValue(game.getRemainingBalls() - 1);
 		pickerRemainingBalls.setValue(game.getRemainingBalls());
 
@@ -352,16 +340,12 @@ public class GameActivity extends Activity {
 		LayoutParams params = new LayoutParams((game.getPlayerCount() + 1) * LIST_COLUMN_WIDTH, LayoutParams.MATCH_PARENT);
 		scoreList.setLayoutParams(params);
 		scoreList.setDividerHeight(0);
-		
+
 		scoreList.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> arg0, View arg1, final int arg2, long arg3) {
-//				new Thread(){
-//					@Override
-//					public void run() {
-						Toast.makeText(GameActivity.this, getRoundSummary(arg2), scoreAdapter.getItem(arg2).getFouls().size() > 0 ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
-//					}
-//				}.run();
+				Toast.makeText(GameActivity.this, getRoundSummary(arg2),
+						scoreAdapter.getItem(arg2).getFouls().size() > 0 ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
 			}
 		});
 
@@ -397,9 +381,13 @@ public class GameActivity extends Activity {
 			profileView.setOnClickListener(new OnClickListener() {
 
 				public void onClick(View v) {
-					addRound(profile);
+					if (pickerRemainingBalls.getValue() > 1) {
+						addRound(profile);
+					} else {
+						rerackMessage();
+					}
 				}
-				
+
 			});
 
 			profileView.setFocusable(false);
@@ -416,6 +404,18 @@ public class GameActivity extends Activity {
 
 			profileContainer.addView(view, params);
 		}
+	}
+	
+	public void rerackMessage() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog dialog;
+		dialog = builder.setTitle("Rerack").setMessage("When there is only 1 ball left on the table, you should re-rack before ending your turn.").setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		}).create();
+		dialog.show();
 	}
 
 	private void showProfileInfo(Profile profile) {
@@ -439,19 +439,6 @@ public class GameActivity extends Activity {
 
 	}
 
-	@SuppressLint("NewApi")
-	private void registerAddButton() {
-		addButton = (Button) findViewById(R.id.button_add);
-		addButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View v) {
-				addRound();
-				registerPickerRemainingBalls();
-			}
-		});
-
-	}
-
 	// TODO end initialisation (no todo, just bookmark)
 
 	private void resetPickerMax() {
@@ -465,7 +452,6 @@ public class GameActivity extends Activity {
 		game.rerack();
 		registerPickerRemainingBalls();
 		resetPickerMax();
-		addButton.setEnabled(true);
 	}
 
 	private void unRerack() {
@@ -531,10 +517,10 @@ public class GameActivity extends Activity {
 		registerRerackButton();
 		registerPickerRemainingBalls();
 	}
-	
+
 	private void addRound(Profile profile) {
 		ArrayList<Profile> profiles = new ArrayList<Profile>();
-		for (Profile p: game.getPlayers()) {
+		for (Profile p : game.getPlayers()) {
 			profiles.add(p);
 		}
 		int turnIndex = profiles.indexOf(profile);
@@ -610,9 +596,8 @@ public class GameActivity extends Activity {
 			Round round = getItem(p);
 
 			TextView number = new TextView(GameActivity.this);
-			number.setText("   "+String.valueOf(round.getNumber()));
+			number.setText("   " + String.valueOf(round.getNumber()));
 			number.setGravity(Gravity.LEFT);
-			
 
 			view.setContentDescription(getRoundSummary(p));
 
@@ -657,7 +642,8 @@ public class GameActivity extends Activity {
 			;
 		}
 
-		summary = "Round " + thisRound.getNumber() + ": " + thisRound.getRemainingBalls() + " balls left on table, " + game.getPlayers()[player].getFirstName() + " potted " + ballCount + (ballCount == 1 ? " ball. " : " balls.");
+		summary = "Round " + thisRound.getNumber() + ": " + thisRound.getRemainingBalls() + " balls left on table, "
+				+ game.getPlayers()[player].getFirstName() + " potted " + ballCount + (ballCount == 1 ? " ball. " : " balls.");
 
 		ArrayList<Foul> fouls = thisRound.getFouls();
 
